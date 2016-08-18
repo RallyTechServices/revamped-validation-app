@@ -1,6 +1,6 @@
 #Validation App
 
-![Screen Shot](./images/chart.png)
+![Screen Shot](./images/validation-dash.png)
 
 Will display a chart with results of various registered validation rules.
 
