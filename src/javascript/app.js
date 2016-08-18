@@ -43,7 +43,8 @@ Ext.define("TSValidationApp", {
           //  {xtype:'tstaskactivenotodo'}
         ],
         HierarchicalRequirement: [
-            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Release','Owner','Description','Feature']},
+            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Release','Owner','Description']},
+            {xtype:'tsstorynofeatureexcludeunfinished' },           
             {xtype:'tsstorynonullplanestimaterule' }
         ]
     },                    
@@ -76,7 +77,60 @@ Ext.define("TSValidationApp", {
         });
         
     },
-      
+
+      showDrillDown: function(records, title) {
+        var me = this;
+
+        var store = Ext.create('Rally.data.custom.Store', {
+            data: records,
+            pageSize: 2000
+        });
+        
+        Ext.create('Rally.ui.dialog.Dialog', {
+            id        : 'detailPopup',
+            title     : title,
+            width     : 500,
+            height    : 400,
+            closable  : true,
+            layout    : 'border',
+            items     : [
+            {
+                xtype                : 'rallygrid',
+                region               : 'center',
+                layout               : 'fit',
+                sortableColumns      : true,
+                showRowActionsColumn : false,
+                showPagingToolbar    : false,
+                columnCfgs           : [
+                    {
+                        dataIndex : 'FormattedID',
+                        text: "id"
+                    },
+                    {
+                        dataIndex : 'Name',
+                        text: "Name",
+                        flex: 1
+                    },
+                    {
+                        dataIndex: '__ruleText',
+                        text: 'Violations',
+                        flex: 2,
+                        renderer: function(value, meta, record) {
+                            if ( Ext.isEmpty(value) ) { return ""; }
+                            var display_value = "";
+                            Ext.Array.each(value, function(violation){
+                                display_value = display_value + Ext.String.format("<li>{0}</li>", violation);
+                            });
+
+                            return Ext.String.format("<ul>{0}</ul>", display_value);
+                        }
+                    }
+                ],
+                store : store
+            }]
+        }).show();
+    },
+
 _updateData: function() {
         var me = this;
         this.setLoading("Loading data...");
@@ -130,7 +184,7 @@ _updateData: function() {
 //             },
             pointEvents: {
                 click: function() {
-                 //   me.showDrillDown(this._records,this._name);
+                   me.showDrillDown(this._records,this._name);
                 }
             }
         });
