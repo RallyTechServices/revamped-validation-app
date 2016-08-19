@@ -43,8 +43,9 @@ Ext.define("TSValidationApp", {
           //  {xtype:'tstaskactivenotodo'}
         ],
         HierarchicalRequirement: [
-            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Release','Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinished' },           
+            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
+            {xtype:'tsstorynofeatureexcludeunfinished' },    
+            {xtype:'tsstorynoreleaseexcludeunfinished' },           
             {xtype:'tsstorynonullplanestimaterule' }
         ]
     },                    

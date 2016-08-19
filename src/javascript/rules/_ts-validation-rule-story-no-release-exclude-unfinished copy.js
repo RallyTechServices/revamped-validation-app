@@ -1,22 +1,22 @@
-Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynofeatureexcludeunfinished',
+    alias:  'widget.tsstorynoreleaseexcludeunfinished',
     
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Feature (Story Excl [Unfinished])'
+        label: 'No Release (Story Excl Unfinish)'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories without Features excluding those with [Unfinished] in the Name."
+            "Stories not assigned to a Release excluding those with [Unfinished] in the Name."
         );
     },
     
     getFetchFields: function() {
-        return ['Feature','Name'];
+        return ['Release','Name'];
     },
     
     isValidField: function(model, field_name) {
@@ -27,8 +27,8 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
     applyRuleToRecord: function(record) {
         var missingFields = [];
 
-        if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
-            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
+        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+            var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
             return msg;   
         }
         
@@ -39,7 +39,7 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
         var today = Rally.util.DateTime.toIsoString(new Date());
 
         return Rally.data.wsapi.Filter.and([
-            {property:'Feature',operator:'=',value:null},
+            {property:'Release',operator:'=',value:null},
             {property:'Name',operator: '!contains', value: "[Unfinished]" }
         ]);
     }

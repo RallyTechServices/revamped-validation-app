@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Aug 18 2016 19:43:51 GMT-0400 (EDT) -->
+    <!--  Build Date: Thu Aug 18 2016 21:04:21 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Aug 18 2016 19:43:51 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Thu Aug 18 2016 21:04:21 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 34196295700;
+        var CHECKSUM = 37047351716;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -419,13 +419,13 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Feature (Story Excl Unfinish)'
+        label: 'No Feature (Story Excl [Unfinished])'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories without Features, but excluding those with [UNFINISHED] in the Name."
+            "Stories without Features excluding those with [Unfinished] in the Name."
         );
     },
     
@@ -442,7 +442,7 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
         var missingFields = [];
 
         if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
-            var msg = "Stories must have Features, unless they have [Unfinished] in the name.";
+            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
             return msg;   
         }
         
@@ -454,7 +454,53 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
 
         return Rally.data.wsapi.Filter.and([
             {property:'Feature',operator:'=',value:null},
-            {property:'Name',operator: 'contains', value: "[Unfinished]" }
+            {property:'Name',operator: '!contains', value: "[Unfinished]" }
+        ]);
+    }
+});
+Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstorynoreleaseexcludeunfinished',
+    
+   
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'No Release (Story Excl Unfinish)'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Stories not assigned to a Release excluding those with [Unfinished] in the Name."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Release','Name'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        var missingFields = [];
+
+        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+            var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
+            return msg;   
+        }
+        
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        var today = Rally.util.DateTime.toIsoString(new Date());
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Release',operator:'=',value:null},
+            {property:'Name',operator: '!contains', value: "[Unfinished]" }
         ]);
     }
 });
@@ -1075,8 +1121,9 @@ Ext.define("TSValidationApp", {
           //  {xtype:'tstaskactivenotodo'}
         ],
         HierarchicalRequirement: [
-            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Release','Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinished' },           
+            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
+            {xtype:'tsstorynofeatureexcludeunfinished' },    
+            {xtype:'tsstorynoreleaseexcludeunfinished' },           
             {xtype:'tsstorynonullplanestimaterule' }
         ]
     },                    
