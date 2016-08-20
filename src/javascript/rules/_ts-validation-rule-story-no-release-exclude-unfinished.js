@@ -27,7 +27,7 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     applyRuleToRecord: function(record) {
         var missingFields = [];
 
-        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
             return msg;   
         }
@@ -36,11 +36,10 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     },
     
     getFilters: function() {        
-        var today = Rally.util.DateTime.toIsoString(new Date());
-
         return Rally.data.wsapi.Filter.and([
             {property:'Release',operator:'=',value:null},
-            {property:'Name',operator: '!contains', value: "[Unfinished]" }
+            {property:'Name',operator: '!contains', value: "[Unfinished]" },
+            {property:'DirectChildrenCount',operator: '=', value: 0 }            
         ]);
     }
 });

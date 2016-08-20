@@ -33,6 +33,13 @@ Ext.define("TSValidationApp", {
             fieldLabel: '',
             margin: '0 0 25 200',
             boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
+        },   { 
+            name: 'showPortfolioItemRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
         }
         ];
     },
@@ -47,6 +54,19 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstorynofeatureexcludeunfinished' },    
             {xtype:'tsstorynoreleaseexcludeunfinished' },           
             {xtype:'tsstorynonullplanestimaterule' }
+        ],
+        'PortfolioItem/Feature': [
+           {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinished'}
+        ]
+        ,
+        'PortfolioItem/Initiative': [
+
+        ],
+        'PortfolioItem/Theme': [
+
+        ],
+        'PortfolioItem/ProductGoal': [
+
         ]
     },                    
     launch: function() {
@@ -167,8 +187,11 @@ _updateData: function() {
     
     _instantiateValidator: function() {
         var me = this;
-        
+
         var rules = [];
+//        if ( this.getSetting('showPortfolioItemRules') ) {
+//            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+//        }
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }
@@ -179,7 +202,7 @@ _updateData: function() {
         var validator = Ext.create('CA.techservices.validator.Validator',{
             rules: rules,
             fetchFields: ['FormattedID','ObjectID'],
-//             baseFilters:{ 
+//            baseFilters:{ 
 //                 HierarchicalRequirement: {},
 //                 Task: {}
 //             },
@@ -211,16 +234,28 @@ _updateData: function() {
         var me = this;
         
         var title_prefix = "";
-        if ( this.getSetting('showStoryRules') && !this.getSetting('showTaskRules') ) {
-            title_prefix = "Story ";
+        if ( this.getSetting('showPortfolioItemRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix = "Portfolio";
         }
-        if ( this.getSetting('showTaskRules') && !this.getSetting('showStoryRules')) {
-            title_prefix = "Task ";
+        if ( this.getSetting('showStoryRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix += "Story";
+        }
+        if ( this.getSetting('showTaskRules')) {
+            if (title_prefix.length > 0){
+                title_prefix += " and ";
+            }
+            title_prefix += "Task";
         }
         
         return {
             chart: { type:'column' },
-            title: { text: title_prefix + 'Validation Results' },
+            title: { text: title_prefix + ' Validation Results' },
             xAxis: {},
             yAxis: { 
                 min: 0,

@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Aug 18 2016 21:04:21 GMT-0400 (EDT) -->
+    <!--  Build Date: Fri Aug 19 2016 16:54:00 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Aug 18 2016 21:04:21 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Fri Aug 19 2016 16:54:00 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 37047351716;
+        var CHECKSUM = 45129024146;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -487,7 +487,7 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     applyRuleToRecord: function(record) {
         var missingFields = [];
 
-        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
             return msg;   
         }
@@ -496,11 +496,10 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     },
     
     getFilters: function() {        
-        var today = Rally.util.DateTime.toIsoString(new Date());
-
         return Rally.data.wsapi.Filter.and([
             {property:'Release',operator:'=',value:null},
-            {property:'Name',operator: '!contains', value: "[Unfinished]" }
+            {property:'Name',operator: '!contains', value: "[Unfinished]" },
+            {property:'DirectChildrenCount',operator: '=', value: 0 }            
         ]);
     }
 });
@@ -560,6 +559,57 @@ Ext.define('CA.techservices.validation.StoryNoNullPlanEstimateRule',{
             {property:'PlanEstimate',operator:'>',value:0},
             {property:'Iteration.StartDate',operator: '<', value: today },
             {property:'ScheduleState',operator: '>', value: 'Defined' }
+        ]);
+    }
+});
+Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnfinished',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstoryreleasenoteqfeaturereleaseexcludeunfinished',
+     
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'Story Release Not Equal Feature Release (Excl [Unfinished])'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Story Release Should be the same as Feature Release excluding those with [Unfinished] in the Name."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Feature','Name','Release'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        var missingFields = [];
+        
+        console.log("applyRuleToRecord: ",record.get('FormattedID'),record.get('Name'),record.get('Feature.FormattedID'),record.get('Feature.Release'));
+
+//      if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+//            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
+//            return msg;   
+//        }
+        if ((record.get('Release.Name')) === (record.get('Feature.Release.Name'))){
+            return null; // no rule violation
+        } else {
+            var msg = "A Story and its Feature should have the same Release.";
+            return msg;
+        }        
+    },
+    
+    getFilters: function() {        
+        var today = Rally.util.DateTime.toIsoString(new Date());
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Feature',operator:'!=',value:null},
+            {property:'Name',operator: '!contains', value: "[Unfinished]" }
         ]);
     }
 });
@@ -769,6 +819,50 @@ Ext.define('CA.techservices.validation.TaskTodoNoEstimate',{
     
     getUserFriendlyRuleLabel: function() {        
         return this.label;
+    }
+});
+Ext.define('CA.techservices.validation.ThemeNoProductGoal',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsthemenoproductgoal',
+    
+   
+    config: {
+        model: 'PortfolioItem/Theme',
+        label: 'Theme w/o Product Goal'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Themes without Product Goals."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','Parent'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        var missingFields = [];
+
+        if ( Ext.isEmpty(record.get('Parent') ) ) {
+            var msg = "Portfolio Themes must be linked to a Product Goal.";
+            return msg;   
+        }
+        
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Parent',operator:'=',value:null}
+        ]);
     }
 });
 Ext.define('CA.techservices.validator.Validator',{
@@ -1111,6 +1205,13 @@ Ext.define("TSValidationApp", {
             fieldLabel: '',
             margin: '0 0 25 200',
             boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
+        },   { 
+            name: 'showPortfolioItemRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
         }
         ];
     },
@@ -1125,6 +1226,19 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstorynofeatureexcludeunfinished' },    
             {xtype:'tsstorynoreleaseexcludeunfinished' },           
             {xtype:'tsstorynonullplanestimaterule' }
+        ],
+        'PortfolioItem/Feature': [
+           {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinished'}
+        ]
+        ,
+        'PortfolioItem/Initiative': [
+
+        ],
+        'PortfolioItem/Theme': [
+
+        ],
+        'PortfolioItem/ProductGoal': [
+
         ]
     },                    
     launch: function() {
@@ -1245,8 +1359,11 @@ _updateData: function() {
     
     _instantiateValidator: function() {
         var me = this;
-        
+
         var rules = [];
+//        if ( this.getSetting('showPortfolioItemRules') ) {
+//            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+//        }
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }
@@ -1257,7 +1374,7 @@ _updateData: function() {
         var validator = Ext.create('CA.techservices.validator.Validator',{
             rules: rules,
             fetchFields: ['FormattedID','ObjectID'],
-//             baseFilters:{ 
+//            baseFilters:{ 
 //                 HierarchicalRequirement: {},
 //                 Task: {}
 //             },
@@ -1289,16 +1406,28 @@ _updateData: function() {
         var me = this;
         
         var title_prefix = "";
-        if ( this.getSetting('showStoryRules') && !this.getSetting('showTaskRules') ) {
-            title_prefix = "Story ";
+        if ( this.getSetting('showPortfolioItemRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix = "Portfolio";
         }
-        if ( this.getSetting('showTaskRules') && !this.getSetting('showStoryRules')) {
-            title_prefix = "Task ";
+        if ( this.getSetting('showStoryRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix += "Story";
+        }
+        if ( this.getSetting('showTaskRules')) {
+            if (title_prefix.length > 0){
+                title_prefix += " and ";
+            }
+            title_prefix += "Task";
         }
         
         return {
             chart: { type:'column' },
-            title: { text: title_prefix + 'Validation Results' },
+            title: { text: title_prefix + ' Validation Results' },
             xAxis: {},
             yAxis: { 
                 min: 0,
