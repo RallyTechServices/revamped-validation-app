@@ -1,6 +1,6 @@
-Ext.define('CA.techservices.validation.TaskTodoNoEstimate',{
+Ext.define('CA.techservices.validation.TaskTodoNoEstimateRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias: 'widget.tstasktodonoestimate',
+    alias: 'widget.tstasktodonoestimaterule',
     config: {
         model: 'Task',
         label: 'Positive ToDo But No Estimate (Task)'

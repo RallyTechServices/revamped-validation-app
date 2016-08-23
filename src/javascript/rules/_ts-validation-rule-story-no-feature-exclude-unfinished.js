@@ -1,17 +1,17 @@
-Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynofeatureexcludeunfinished',
+    alias:  'widget.tsstorynofeatureexcludeunfinishedrule',
     
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Feature (Story Excl Unfinish)'
+        label: 'No Feature (Story Excl [Unfinished])'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories without Features, but excluding those with [UNFINISHED] in the Name."
+            "Stories without Features excluding those with [Unfinished] in the Name."
         );
     },
     
@@ -28,7 +28,7 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
         var missingFields = [];
 
         if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
-            var msg = "Stories must have Features, unless they have [Unfinished] in the name.";
+            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
             return msg;   
         }
         
@@ -40,7 +40,7 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
 
         return Rally.data.wsapi.Filter.and([
             {property:'Feature',operator:'=',value:null},
-            {property:'Name',operator: 'contains', value: "[Unfinished]" }
+            {property:'Name',operator: '!contains', value: "[Unfinished]" }
         ]);
     }
 });
