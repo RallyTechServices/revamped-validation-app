@@ -68,7 +68,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
         Defect: [
-            {xtype:'tsdefectclosednoresolutionrule'}
+            {xtype:'tsdefectclosednoresolutionrule'},
+            {xtype:'tsdefectacceptednotclosedrule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},

@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 09:53:20 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 13:32:33 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 09:53:20 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 13:32:33 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 61605701667;
+        var CHECKSUM = 66242463003;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -275,6 +275,52 @@ Ext.define('CA.techservices.validation.BaseRule',{
     
     getUserFriendlyRuleLabel: function() {        
         return this.label;
+    }
+});
+Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsdefectacceptednotclosedrule',
+    
+    config: {
+        model: 'Defect',
+        label: 'Accepted Defect Not Closed'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Accepted Defects should additionally be Closed."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','ScheduleState','State','AcceptedDate'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+console.log("applyRuleToRecord",record);
+        // using fact that the system populates the AcceptedDate... for Accepted and higher ScheduleStates...
+        if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
+        // if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
+            var msg = Ext.String.format("Accepted Defects should additionally be Closed.(SchedState={0}: State={1})",record.get('ScheduleState'),record.get('State'));
+            return msg;   
+        } 
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'State',operator:'!=',value:'Closed'},
+            {property:'AcceptedDate',operator:'!=',value:null}
+            //{property:'ScheduleState',operator:'=',value:'Accepted'}
+        ]);
     }
 });
 Ext.define('CA.techservices.validation.DefectClosedNoResolution',{
@@ -1431,7 +1477,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
         Defect: [
-            {xtype:'tsdefectclosednoresolutionrule'}
+            {xtype:'tsdefectclosednoresolutionrule'},
+            {xtype:'tsdefectacceptednotclosedrule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
