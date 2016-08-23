@@ -1,6 +1,6 @@
-Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynofeatureexcludeunfinished',
+    alias:  'widget.tsstorynofeatureexcludeunfinishedrule',
     
    
     config: {

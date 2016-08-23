@@ -13,11 +13,20 @@ Ext.define("TSValidationApp", {
     config: {
         defaultSettings: {
             showStoryRules: true,
-            showTaskRules: false
+            showTaskRules: false,
+            showPortfolioItemRules: false
         }
     },
     getSettingsFields: function() {
         return [
+        { 
+            name: 'showPortfolioItemRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
+        },
         { 
             name: 'showStoryRules',
             xtype: 'rallycheckboxfield',
@@ -33,40 +42,29 @@ Ext.define("TSValidationApp", {
             fieldLabel: '',
             margin: '0 0 25 200',
             boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
-        },   { 
-            name: 'showPortfolioItemRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
         }
         ];
     },
     rulesByType: {
-        Task: [
-            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
-            {xtype:'tstasktodonoestimate'},
-          //  {xtype:'tstaskactivenotodo'}
+        PortfolioItem: [           
+            {xtype:'tsthemenoproductgoalrule'},
+            {xtype:'tsinitiativenothemerule'},
+            {xtype:'tsthemeprojectnotglobaldevelopmentrule'}
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinished' },    
-            {xtype:'tsstorynoreleaseexcludeunfinished' },           
-            {xtype:'tsstorynonullplanestimaterule' }
+            {xtype:'tsstorynofeatureexcludeunfinishedrule' },    
+            {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
+            {xtype:'tsstorynonullplanestimaterule' },
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
-        'PortfolioItem/Feature': [
-           {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinished'}
-        ]
-        ,
-        'PortfolioItem/Initiative': [
-
+        Defect: [
+          //  {xtype:'tstaskactivenotodo'}
         ],
-        'PortfolioItem/Theme': [
-
-        ],
-        'PortfolioItem/ProductGoal': [
-
+        Task: [
+            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
+            {xtype:'tstasktodonoestimaterule'},
+          //  {xtype:'tstaskactivenotodorule'}
         ]
     },                    
     launch: function() {
@@ -174,7 +172,7 @@ _updateData: function() {
                     return;
                 }
                 
-             //   this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
+                this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
                 
                 this._makeChart(results);
             },
@@ -189,9 +187,9 @@ _updateData: function() {
         var me = this;
 
         var rules = [];
-//        if ( this.getSetting('showPortfolioItemRules') ) {
-//            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-//        }
+        if ( this.getSetting('showPortfolioItemRules') ) {
+            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+        }
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }

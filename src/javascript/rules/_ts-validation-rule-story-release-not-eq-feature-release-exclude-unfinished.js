@@ -1,6 +1,6 @@
-Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstoryreleasenoteqfeaturereleaseexcludeunfinished',
+    alias:  'widget.tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule',
      
     config: {
         model: 'HierarchicalRequirement',
@@ -24,19 +24,22 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
     },
     
     applyRuleToRecord: function(record) {
-        var missingFields = [];
-        
-        console.log("applyRuleToRecord: ",record.get('FormattedID'),record.get('Name'),record.get('Feature.FormattedID'),record.get('Feature.Release'));
-
-//      if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
-//            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
-//            return msg;   
-//        }
-        if ((record.get('Release.Name')) === (record.get('Feature.Release.Name'))){
+        // the statement below - short-circuits if the story does not have a release or the feature does not have a release. 
+        if (((record.get('Release') && record.get('Feature')) && record.get('Feature').Release) && ((record.get('Release').Name) == (record.get('Feature').Release.Name)))  {
             return null; // no rule violation
         } else {
-            var msg = "A Story and its Feature should have the same Release.";
-            return msg;
+            var us_release = "No Release";
+            if (record.get('Release') != null) {
+                us_release = record.get('Release').Name;
+            }
+            var fe_msg = "No Release";
+            if (record.get('Feature') && (record.get('Feature').Release != null)) {
+                fe_msg = record.get('Feature').Release.Name;
+            } else {
+                fe_msg = "No Feature at all!";
+            }
+        
+            return Ext.String.format("Story.Release({0}) != Feature.Release ({1})!",us_release,fe_msg);
         }        
     },
     

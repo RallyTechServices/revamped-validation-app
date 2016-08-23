@@ -1,6 +1,6 @@
-Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynoreleaseexcludeunfinished',
+    alias:  'widget.tsstorynoreleaseexcludeunfinishedrule',
     
    
     config: {
@@ -25,7 +25,9 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     },
     
     applyRuleToRecord: function(record) {
-        var missingFields = [];
+        //var missingFields = [];
+
+console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";

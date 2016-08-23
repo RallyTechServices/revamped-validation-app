@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Fri Aug 19 2016 16:54:00 GMT-0400 (EDT) -->
+    <!--  Build Date: Mon Aug 22 2016 20:04:57 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Fri Aug 19 2016 16:54:00 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Mon Aug 22 2016 20:04:57 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 45129024146;
+        var CHECKSUM = 51514386082;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -277,6 +277,52 @@ Ext.define('CA.techservices.validation.BaseRule',{
         return this.label;
     }
 });
+Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsinitiativenothemerule',
+    
+   
+    config: {
+        model: 'PortfolioItem/Initiative',
+        label: 'Initiative w/o Theme'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Initiative without Theme."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','Parent'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+console.log("applyRuleToRecord",record);
+
+        if ( Ext.isEmpty(record.get('Parent') ) ) {
+            var msg = "Portfolio Initiatives must be linked to a Theme.";
+            return msg;   
+        } else {
+            return null; // no rule violation
+        }
+    },
+    
+    getFilters: function() {        
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Parent',operator:'=',value:null}
+        ]);
+    }
+});
 Ext.define('CA.techservices.validation.StoryCompletedNoActuals',{
     extend: 'CA.techservices.validation.BaseRule',
     alias: 'widget.tsstorycompletednoactuals',
@@ -412,9 +458,9 @@ Ext.define('CA.techservices.validation.StoryRequiredFieldRule',{
         return leaf_filter.and(field_filter);
     }
 });
-Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynofeatureexcludeunfinished',
+    alias:  'widget.tsstorynofeatureexcludeunfinishedrule',
     
    
     config: {
@@ -458,9 +504,9 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinished',{
         ]);
     }
 });
-Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynoreleaseexcludeunfinished',
+    alias:  'widget.tsstorynoreleaseexcludeunfinishedrule',
     
    
     config: {
@@ -485,7 +531,9 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinished',{
     },
     
     applyRuleToRecord: function(record) {
-        var missingFields = [];
+        //var missingFields = [];
+
+console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
@@ -562,9 +610,9 @@ Ext.define('CA.techservices.validation.StoryNoNullPlanEstimateRule',{
         ]);
     }
 });
-Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnfinished',{
+Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstoryreleasenoteqfeaturereleaseexcludeunfinished',
+    alias:  'widget.tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule',
      
     config: {
         model: 'HierarchicalRequirement',
@@ -588,19 +636,22 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
     },
     
     applyRuleToRecord: function(record) {
-        var missingFields = [];
-        
-        console.log("applyRuleToRecord: ",record.get('FormattedID'),record.get('Name'),record.get('Feature.FormattedID'),record.get('Feature.Release'));
-
-//      if ( Ext.isEmpty(record.get('Feature') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
-//            var msg = "Stories must have Features unless they have [Unfinished] in the name.";
-//            return msg;   
-//        }
-        if ((record.get('Release.Name')) === (record.get('Feature.Release.Name'))){
+        // the statement below - short-circuits if the story does not have a release or the feature does not have a release. 
+        if (((record.get('Release') && record.get('Feature')) && record.get('Feature').Release) && ((record.get('Release').Name) == (record.get('Feature').Release.Name)))  {
             return null; // no rule violation
         } else {
-            var msg = "A Story and its Feature should have the same Release.";
-            return msg;
+            var us_release = "No Release";
+            if (record.get('Release') != null) {
+                us_release = record.get('Release').Name;
+            }
+            var fe_msg = "No Release";
+            if (record.get('Feature') && (record.get('Feature').Release != null)) {
+                fe_msg = record.get('Feature').Release.Name;
+            } else {
+                fe_msg = "No Feature at all!";
+            }
+        
+            return Ext.String.format("Story.Release({0}) != Feature.Release ({1})!",us_release,fe_msg);
         }        
     },
     
@@ -783,9 +834,9 @@ Ext.define('CA.techservices.validation.TaskRequiredFieldRule',{
         return Rally.data.wsapi.Filter.or(filters);
     }
 });
-Ext.define('CA.techservices.validation.TaskTodoNoEstimate',{
+Ext.define('CA.techservices.validation.TaskTodoNoEstimateRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias: 'widget.tstasktodonoestimate',
+    alias: 'widget.tstasktodonoestimaterule',
     config: {
         model: 'Task',
         label: 'Positive ToDo But No Estimate (Task)'
@@ -821,9 +872,9 @@ Ext.define('CA.techservices.validation.TaskTodoNoEstimate',{
         return this.label;
     }
 });
-Ext.define('CA.techservices.validation.ThemeNoProductGoal',{
+Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsthemenoproductgoal',
+    alias:  'widget.tsthemenoproductgoalrule',
     
    
     config: {
@@ -848,14 +899,58 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoal',{
     },
     
     applyRuleToRecord: function(record) {
-        var missingFields = [];
+        //var missingFields = [];
 
         if ( Ext.isEmpty(record.get('Parent') ) ) {
             var msg = "Portfolio Themes must be linked to a Product Goal.";
             return msg;   
+        } else {
+            return null; // no rule violation
         }
-        
-        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Parent',operator:'=',value:null}
+        ]);
+    }
+});
+Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsthemeprojectnotglobaldevelopmentrule',
+    
+   
+    config: {
+        model: 'PortfolioItem/Theme',
+        label: 'Theme Project Not Global Development'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Themes must be in the Global Development Project."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','Project'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+        if ( record.get('Project').Name != 'A' )  {
+            var msg = Ext.String.format("Portfolio Themes must be saved into the Global Development project, not {0}.",record.get('Project').Name);
+            return msg;   
+        } else {
+            return null; // no rule violation
+        }
     },
     
     getFilters: function() {        
@@ -1185,11 +1280,20 @@ Ext.define("TSValidationApp", {
     config: {
         defaultSettings: {
             showStoryRules: true,
-            showTaskRules: false
+            showTaskRules: false,
+            showPortfolioItemRules: false
         }
     },
     getSettingsFields: function() {
         return [
+        { 
+            name: 'showPortfolioItemRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
+        },
         { 
             name: 'showStoryRules',
             xtype: 'rallycheckboxfield',
@@ -1205,40 +1309,29 @@ Ext.define("TSValidationApp", {
             fieldLabel: '',
             margin: '0 0 25 200',
             boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
-        },   { 
-            name: 'showPortfolioItemRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
         }
         ];
     },
     rulesByType: {
-        Task: [
-            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
-            {xtype:'tstasktodonoestimate'},
-          //  {xtype:'tstaskactivenotodo'}
+        PortfolioItem: [           
+            {xtype:'tsthemenoproductgoalrule'},
+            {xtype:'tsinitiativenothemerule'},
+            {xtype:'tsthemeprojectnotglobaldevelopmentrule'}
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinished' },    
-            {xtype:'tsstorynoreleaseexcludeunfinished' },           
-            {xtype:'tsstorynonullplanestimaterule' }
+            {xtype:'tsstorynofeatureexcludeunfinishedrule' },    
+            {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
+            {xtype:'tsstorynonullplanestimaterule' },
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
-        'PortfolioItem/Feature': [
-           {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinished'}
-        ]
-        ,
-        'PortfolioItem/Initiative': [
-
+        Defect: [
+          //  {xtype:'tstaskactivenotodo'}
         ],
-        'PortfolioItem/Theme': [
-
-        ],
-        'PortfolioItem/ProductGoal': [
-
+        Task: [
+            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
+            {xtype:'tstasktodonoestimaterule'},
+          //  {xtype:'tstaskactivenotodorule'}
         ]
     },                    
     launch: function() {
@@ -1346,7 +1439,7 @@ _updateData: function() {
                     return;
                 }
                 
-             //   this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
+                this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
                 
                 this._makeChart(results);
             },
@@ -1361,9 +1454,9 @@ _updateData: function() {
         var me = this;
 
         var rules = [];
-//        if ( this.getSetting('showPortfolioItemRules') ) {
-//            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-//        }
+        if ( this.getSetting('showPortfolioItemRules') ) {
+            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+        }
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }
