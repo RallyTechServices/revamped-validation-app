@@ -49,7 +49,8 @@ Ext.define("TSValidationApp", {
         PortfolioItem: [           
             {xtype:'tsthemenoproductgoalrule'},
             {xtype:'tsinitiativenothemerule'},
-            {xtype:'tsthemeprojectnotglobaldevelopmentrule'}
+            {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
+            {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},

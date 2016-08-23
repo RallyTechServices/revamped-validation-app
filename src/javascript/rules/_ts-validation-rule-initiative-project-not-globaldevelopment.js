@@ -1,20 +1,20 @@
-Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
+Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsthemeprojectnotglobaldevelopmentrule',
+    alias:  'widget.tsinitiativeprojectnotglobaldevelopmentrule',
     
     // Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
     project_PortfolioRoot: "Global Development",
    
     config: {
-        model: 'PortfolioItem/Theme',
+        model: 'PortfolioItem/Initiative',
         //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot)
-        label: Ext.String.format("Theme Project != 'Global Development'")
+        label: Ext.String.format("Initiative Project != 'Global Development' or direct child project.")
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Themes must be in the ", this.project_PortfolioRoot," Project."
+            "Initiatives must be in the ", this.project_PortfolioRoot," Project or a direct child project."
         );
     },
     
@@ -30,11 +30,11 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-        if ( record.get('Project').Name != this.project_PortfolioRoot )  {
-            var msg = Ext.String.format("Portfolio Themes must be saved into {0}, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
-            return msg;   
+        if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+            return null; // no rule violation   
         } else {
-            return null; // no rule violation
+            var msg = Ext.String.format("Portfolio Initiatives must be saved into {0} or a direct child project, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
+            return msg;
         }
     },
     

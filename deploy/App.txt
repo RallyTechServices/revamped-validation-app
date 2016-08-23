@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Mon Aug 22 2016 20:04:57 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 08:45:11 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Aug 22 2016 20:04:57 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 08:45:11 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 51514386082;
+        var CHECKSUM = 56840979095;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -313,6 +313,53 @@ console.log("applyRuleToRecord",record);
             return msg;   
         } else {
             return null; // no rule violation
+        }
+    },
+    
+    getFilters: function() {        
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Parent',operator:'=',value:null}
+        ]);
+    }
+});
+Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsinitiativeprojectnotglobaldevelopmentrule',
+    
+    // Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
+    project_PortfolioRoot: "Global Development",
+   
+    config: {
+        model: 'PortfolioItem/Initiative',
+        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot)
+        label: Ext.String.format("Initiative Project != 'Global Development' or direct child project.")
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Initiatives must be in the ", this.project_PortfolioRoot," Project or a direct child project."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','Project'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+        if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+            return null; // no rule violation   
+        } else {
+            var msg = Ext.String.format("Portfolio Initiatives must be saved into {0} or a direct child project, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
+            return msg;
         }
     },
     
@@ -920,16 +967,19 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsthemeprojectnotglobaldevelopmentrule',
     
+    // Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
+    project_PortfolioRoot: "Global Development",
    
     config: {
         model: 'PortfolioItem/Theme',
-        label: 'Theme Project Not Global Development'
+        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot)
+        label: Ext.String.format("Theme Project != 'Global Development'")
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Themes must be in the Global Development Project."
+            "Themes must be in the ", this.project_PortfolioRoot," Project."
         );
     },
     
@@ -945,8 +995,8 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-        if ( record.get('Project').Name != 'A' )  {
-            var msg = Ext.String.format("Portfolio Themes must be saved into the Global Development project, not {0}.",record.get('Project').Name);
+        if ( record.get('Project').Name != this.project_PortfolioRoot )  {
+            var msg = Ext.String.format("Portfolio Themes must be saved into {0}, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
             return msg;   
         } else {
             return null; // no rule violation
@@ -1316,7 +1366,8 @@ Ext.define("TSValidationApp", {
         PortfolioItem: [           
             {xtype:'tsthemenoproductgoalrule'},
             {xtype:'tsinitiativenothemerule'},
-            {xtype:'tsthemeprojectnotglobaldevelopmentrule'}
+            {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
+            {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
