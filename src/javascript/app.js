@@ -36,6 +36,14 @@ Ext.define("TSValidationApp", {
             boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
         },
         { 
+            name: 'showDefectRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
+        },
+        { 
             name: 'showTaskRules',
             xtype: 'rallycheckboxfield',
             boxLabelAlign: 'after',
@@ -60,7 +68,7 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
         Defect: [
-          //  {xtype:'tstaskactivenotodo'}
+            {xtype:'tsdefectclosednoresolutionrule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
@@ -194,6 +202,9 @@ _updateData: function() {
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }
+        if ( this.getSetting('showDefectRules') ) {
+            rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+        }
         if ( this.getSetting('showTaskRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['Task']);
         }
@@ -244,6 +255,12 @@ _updateData: function() {
                 title_prefix += ", ";
             }
             title_prefix += "Story";
+        }
+        if ( this.getSetting('showDefectRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix += "Defect";
         }
         if ( this.getSetting('showTaskRules')) {
             if (title_prefix.length > 0){

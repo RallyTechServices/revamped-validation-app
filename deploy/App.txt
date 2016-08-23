@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 08:45:11 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 09:53:20 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 08:45:11 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 09:53:20 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 56840979095;
+        var CHECKSUM = 61605701667;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -277,6 +277,50 @@ Ext.define('CA.techservices.validation.BaseRule',{
         return this.label;
     }
 });
+Ext.define('CA.techservices.validation.DefectClosedNoResolution',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsdefectclosednoresolutionrule',
+    
+    config: {
+        model: 'Defect',
+        label: 'Closed Defect w/No Resolution'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Closed Defects must have a Resolution."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','State','Resolution'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+console.log("applyRuleToRecord",record);
+
+        if (( record.get('State') == "Closed" ) && ((record.get('Resolution') == null) || (record.get('Resolution') == "None")))  {
+            var msg = "Closed Defects must have a Resolution.";
+            return msg;   
+        } 
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'State',operator:'=',value:"Closed"},
+            {property:'Resolution',operator:'=',value:"None"}
+        ]);
+    }
+});
 Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsinitiativenothemerule',
@@ -354,6 +398,8 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     
     applyRuleToRecord: function(record) {
         //var missingFields = [];
+
+console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
@@ -1353,6 +1399,14 @@ Ext.define("TSValidationApp", {
             boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
         },
         { 
+            name: 'showDefectRules',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
+        },
+        { 
             name: 'showTaskRules',
             xtype: 'rallycheckboxfield',
             boxLabelAlign: 'after',
@@ -1377,7 +1431,7 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
         ],
         Defect: [
-          //  {xtype:'tstaskactivenotodo'}
+            {xtype:'tsdefectclosednoresolutionrule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
@@ -1511,6 +1565,9 @@ _updateData: function() {
         if ( this.getSetting('showStoryRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
         }
+        if ( this.getSetting('showDefectRules') ) {
+            rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+        }
         if ( this.getSetting('showTaskRules') ) {
             rules = Ext.Array.push(rules, this.rulesByType['Task']);
         }
@@ -1561,6 +1618,12 @@ _updateData: function() {
                 title_prefix += ", ";
             }
             title_prefix += "Story";
+        }
+        if ( this.getSetting('showDefectRules') ) {
+            if (title_prefix.length > 0){
+                title_prefix += ", ";
+            }
+            title_prefix += "Defect";
         }
         if ( this.getSetting('showTaskRules')) {
             if (title_prefix.length > 0){
