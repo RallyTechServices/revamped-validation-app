@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 13:32:33 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 13:51:42 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 13:32:33 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 13:51:42 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 66242463003;
+        var CHECKSUM = 70214319763;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -803,6 +803,52 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
         ]);
     }
 });
+Ext.define('CA.techservices.validation.StoryUnfinishedWithFeatureRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstoryunfinishedwithfeaturerule',
+    
+   
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'Unfinished Story w Feature'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Unfinished Stories should be disconnected from their Features."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Feature','Name'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+
+console.log('applyRuleToRecord',record);
+
+        if (( record.get('Feature') != null ) && (/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
+            var msg = "Unfinished Stories should be disconnected from their features after splitting.";
+            return msg;   
+        }        
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        var today = Rally.util.DateTime.toIsoString(new Date());
+
+        return Rally.data.wsapi.Filter.and([
+            {property:'Feature',operator:'!=',value:null},
+            {property:'Name',operator: '!contains', value: "[Unfinished]" }
+        ]);
+    }
+});
 Ext.define('CA.techservices.validation.TaskActiveNoToDo',{
     extend: 'CA.techservices.validation.BaseRule',
     alias: 'widget.tstaskactivenotodo',
@@ -1471,7 +1517,8 @@ Ext.define("TSValidationApp", {
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinishedrule' },    
+            {xtype:'tsstorynofeatureexcludeunfinishedrule' },
+            {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
