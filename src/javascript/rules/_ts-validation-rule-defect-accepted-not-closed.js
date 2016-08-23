@@ -15,7 +15,7 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
     },
     
     getFetchFields: function() {
-        return ['Name','ScheduleState','State'];
+        return ['Name','ScheduleState','State','AcceptedDate'];
     },
     
     isValidField: function(model, field_name) {
@@ -28,9 +28,9 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
 
 console.log("applyRuleToRecord",record);
         // using fact that the system populates the AcceptedDate... for Accepted and higher ScheduleStates...
-      //  if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
-        if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
-            var msg = "Accepted Defects should additionally be Closed.";
+        if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
+        // if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
+            var msg = Ext.String.format("Accepted Defects should additionally be Closed.(SchedState={0}: State={1})",record.get('ScheduleState'),record.get('State'));
             return msg;   
         } 
         return null; // no rule violation
@@ -39,8 +39,8 @@ console.log("applyRuleToRecord",record);
     getFilters: function() {        
         return Rally.data.wsapi.Filter.and([
             {property:'State',operator:'!=',value:'Closed'},
-            //{property:'AcceptedDate',operator:'!=',value:null}
-            {property:'ScheduleState',operator:'=',value:'Accepted'}
+            {property:'AcceptedDate',operator:'!=',value:null}
+            //{property:'ScheduleState',operator:'=',value:'Accepted'}
         ]);
     }
 });

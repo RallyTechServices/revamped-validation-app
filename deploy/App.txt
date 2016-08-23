@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 10:28:17 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 13:32:33 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 10:28:17 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 13:32:33 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 65862608521;
+        var CHECKSUM = 66242463003;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -294,7 +294,7 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
     },
     
     getFetchFields: function() {
-        return ['Name','ScheduleState','State'];
+        return ['Name','ScheduleState','State','AcceptedDate'];
     },
     
     isValidField: function(model, field_name) {
@@ -307,9 +307,9 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
 
 console.log("applyRuleToRecord",record);
         // using fact that the system populates the AcceptedDate... for Accepted and higher ScheduleStates...
-      //  if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
-        if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
-            var msg = "Accepted Defects should additionally be Closed.";
+        if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
+        // if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
+            var msg = Ext.String.format("Accepted Defects should additionally be Closed.(SchedState={0}: State={1})",record.get('ScheduleState'),record.get('State'));
             return msg;   
         } 
         return null; // no rule violation
@@ -318,8 +318,8 @@ console.log("applyRuleToRecord",record);
     getFilters: function() {        
         return Rally.data.wsapi.Filter.and([
             {property:'State',operator:'!=',value:'Closed'},
-            //{property:'AcceptedDate',operator:'!=',value:null}
-            {property:'ScheduleState',operator:'=',value:'Accepted'}
+            {property:'AcceptedDate',operator:'!=',value:null}
+            //{property:'ScheduleState',operator:'=',value:'Accepted'}
         ]);
     }
 });
