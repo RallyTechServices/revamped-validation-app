@@ -30,7 +30,7 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("ApplyRuleToRecord:",record);        
+        //console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   

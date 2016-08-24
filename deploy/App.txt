@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 13:51:42 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Aug 23 2016 19:46:54 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 13:51:42 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Aug 23 2016 19:46:54 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 70214319763;
+        var CHECKSUM = 70912864327;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -305,7 +305,8 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
+
         // using fact that the system populates the AcceptedDate... for Accepted and higher ScheduleStates...
         if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
         // if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {
@@ -351,7 +352,7 @@ Ext.define('CA.techservices.validation.DefectClosedNoResolution',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if (( record.get('State') == "Closed" ) && ((record.get('Resolution') == null) || (record.get('Resolution') == "None")))  {
             var msg = "Closed Defects must have a Resolution.";
@@ -396,7 +397,7 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Parent') ) ) {
             var msg = "Portfolio Initiatives must be linked to a Theme.";
@@ -445,7 +446,7 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("ApplyRuleToRecord:",record);        
+        //console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
@@ -672,7 +673,7 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
@@ -831,7 +832,7 @@ Ext.define('CA.techservices.validation.StoryUnfinishedWithFeatureRule',{
     
     applyRuleToRecord: function(record) {
 
-console.log('applyRuleToRecord',record);
+        //console.log('applyRuleToRecord',record);
 
         if (( record.get('Feature') != null ) && (/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
             var msg = "Unfinished Stories should be disconnected from their features after splitting.";
@@ -849,9 +850,9 @@ console.log('applyRuleToRecord',record);
         ]);
     }
 });
-Ext.define('CA.techservices.validation.TaskActiveNoToDo',{
+Ext.define('CA.techservices.validation.TaskActiveNoToDoRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias: 'widget.tstaskactivenotodo',
+    alias: 'widget.tstaskactivenotodorule',
     config: {
         model: 'Task',
         label: 'Incomplete Task Without ToDo'
@@ -1110,7 +1111,7 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
    
     config: {
         model: 'PortfolioItem/Theme',
-        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot)
+        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot) // #todo - make this work!
         label: Ext.String.format("Theme Project != 'Global Development'")
     },
     
@@ -1589,7 +1590,10 @@ Ext.define("TSValidationApp", {
                 columnCfgs           : [
                     {
                         dataIndex : 'FormattedID',
-                        text: "id"
+                        text: "id",
+                        renderer: function(value,meta,record){
+                            return Ext.String.format("<a href='{0}' target='_top'>{1}</a>",Rally.nav.Manager.getDetailUrl(record.get('_ref')),value);
+                        }
                     },
                     {
                         dataIndex : 'Name',

@@ -26,7 +26,8 @@ Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
+
         // using fact that the system populates the AcceptedDate... for Accepted and higher ScheduleStates...
         if (( record.get('AcceptedDate') != null ) && (record.get('State') != "Closed") ) {
         // if (( record.get('ScheduleState') == "Accepted" ) && (record.get('State') != "Closed") ) {

@@ -134,7 +134,10 @@ Ext.define("TSValidationApp", {
                 columnCfgs           : [
                     {
                         dataIndex : 'FormattedID',
-                        text: "id"
+                        text: "id",
+                        renderer: function(value,meta,record){
+                            return Ext.String.format("<a href='{0}' target='_top'>{1}</a>",Rally.nav.Manager.getDetailUrl(record.get('_ref')),value);
+                        }
                     },
                     {
                         dataIndex : 'Name',

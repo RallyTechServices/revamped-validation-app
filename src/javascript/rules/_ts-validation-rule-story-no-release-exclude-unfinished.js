@@ -27,7 +27,7 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
             var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";

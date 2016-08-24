@@ -26,7 +26,7 @@ Ext.define('CA.techservices.validation.DefectClosedNoResolution',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if (( record.get('State') == "Closed" ) && ((record.get('Resolution') == null) || (record.get('Resolution') == "None")))  {
             var msg = "Closed Defects must have a Resolution.";
