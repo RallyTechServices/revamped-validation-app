@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 19:46:54 GMT-0400 (EDT) -->
+    <!--  Build Date: Wed Aug 24 2016 13:17:15 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 19:46:54 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Wed Aug 24 2016 13:17:15 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 70912864327;
+        var CHECKSUM = 78745187620;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -804,6 +804,49 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
         ]);
     }
 });
+Ext.define('CA.techservices.validation.StoryUnfinishedAcceptedRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstoryunfinishedacceptedrule',
+    
+    config: {
+        model: 'HierarchicalRequirement',
+        label: '[Unfinished] Story >= Accepted'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "[Unfinished] Stories should be set to Completed, not Accepted."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['ScheduleState','Name','DirectChildrenCount','AcceptedDate'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //console.log("applyRuleToRecord",record);
+
+        if (( record.get('AcceptedDate') != null ) && (/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
+            var msg = "[Unfinished] Stories should be set to 'Completed', not 'Accepted'.";
+            return msg;   
+        }
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'AcceptedDate',operator:'!=',value: null },
+            {property:'Name',operator: 'contains', value: '[Unfinished]' },
+            {property:'DirectChildrenCount',operator: '<', value: 1 }            
+        ]);
+    }
+});
 Ext.define('CA.techservices.validation.StoryUnfinishedWithFeatureRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsstoryunfinishedwithfeaturerule',
@@ -1460,7 +1503,69 @@ Ext.define("TSValidationApp", {
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
     items: [
-        {xtype:'container',itemId:'display_box'}
+        { //filter box
+            xtype:'container',
+            itemId:'filters_box',
+            fieldLabel: "Rule Display",
+            border: 1,
+            style:{ borderColor: 'light-grey', borderStyle: 'solid'},
+            layout: {
+                type: 'hbox',
+                align: 'left'
+            },
+            items:[
+            {    
+                name: 'showPortfolioItemRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Portfolio Item'
+            },
+            { 
+                name: 'showStoryRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Story'
+            },
+            { 
+                name: 'showDefectRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Defect'
+            },
+            { 
+                name: 'showTaskRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Task'
+            },
+            {   
+                xtype: 'rallyiterationcombobox',
+                margin: '10 10 10 10',        
+                fieldLabel: 'Iteration',
+                labelAlign: 'right',
+                width: 350
+                },
+            {   
+                xtype: 'rallyreleasecombobox', 
+                margin: '10 10 10 10',
+                fieldLabel: 'Release',
+                labelAlign: 'right',
+                width: 350
+                }
+            ] // end of filter box
+        },
+        { // main chart display  
+            xtype:'container',
+            itemId:'display_box'
+        }
     ],
 
     integrationHeaders : {
@@ -1468,9 +1573,10 @@ Ext.define("TSValidationApp", {
     },
     config: {
         defaultSettings: {
+            showPortfolioItemRules: false,
             showStoryRules: true,
-            showTaskRules: false,
-            showPortfolioItemRules: false
+            showDefectRules: false,
+            showTaskRules: false
         }
     },
     getSettingsFields: function() {
@@ -1522,7 +1628,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
+            {xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},

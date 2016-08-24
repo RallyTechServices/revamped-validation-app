@@ -4,7 +4,69 @@ Ext.define("TSValidationApp", {
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
     items: [
-        {xtype:'container',itemId:'display_box'}
+        { //filter box
+            xtype:'container',
+            itemId:'filters_box',
+            fieldLabel: "Rule Display",
+            border: 1,
+            style:{ borderColor: 'light-grey', borderStyle: 'solid'},
+            layout: {
+                type: 'hbox',
+                align: 'left'
+            },
+            items:[
+            {    
+                name: 'showPortfolioItemRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Portfolio Item'
+            },
+            { 
+                name: 'showStoryRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Story'
+            },
+            { 
+                name: 'showDefectRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Defect'
+            },
+            { 
+                name: 'showTaskRules',
+                xtype: 'rallycheckboxfield',
+                boxLabelAlign: 'after',
+                fieldLabel: '',
+                margin: '10 10 10 10',
+                boxLabel: 'Task'
+            },
+            {   
+                xtype: 'rallyiterationcombobox',
+                margin: '10 10 10 10',        
+                fieldLabel: 'Iteration',
+                labelAlign: 'right',
+                width: 350
+                },
+            {   
+                xtype: 'rallyreleasecombobox', 
+                margin: '10 10 10 10',
+                fieldLabel: 'Release',
+                labelAlign: 'right',
+                width: 350
+                }
+            ] // end of filter box
+        },
+        { // main chart display  
+            xtype:'container',
+            itemId:'display_box'
+        }
     ],
 
     integrationHeaders : {
@@ -12,9 +74,10 @@ Ext.define("TSValidationApp", {
     },
     config: {
         defaultSettings: {
+            showPortfolioItemRules: false,
             showStoryRules: true,
-            showTaskRules: false,
-            showPortfolioItemRules: false
+            showDefectRules: false,
+            showTaskRules: false
         }
     },
     getSettingsFields: function() {
@@ -66,7 +129,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
+            {xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
