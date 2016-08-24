@@ -1,6 +1,6 @@
-Ext.define('CA.techservices.validation.TaskActiveNoToDo',{
+Ext.define('CA.techservices.validation.TaskActiveNoToDoRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias: 'widget.tstaskactivenotodo',
+    alias: 'widget.tstaskactivenotodorule',
     config: {
         model: 'Task',
         label: 'Incomplete Task Without ToDo'

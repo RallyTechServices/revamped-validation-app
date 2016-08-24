@@ -27,7 +27,7 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-console.log("applyRuleToRecord",record);
+        //console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Parent') ) ) {
             var msg = "Portfolio Initiatives must be linked to a Theme.";

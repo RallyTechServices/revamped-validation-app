@@ -26,7 +26,7 @@ Ext.define('CA.techservices.validation.StoryUnfinishedWithFeatureRule',{
     
     applyRuleToRecord: function(record) {
 
-console.log('applyRuleToRecord',record);
+        //console.log('applyRuleToRecord',record);
 
         if (( record.get('Feature') != null ) && (/^\[Unfinished\]/.test(record.get('Name') ) ) ) {
             var msg = "Unfinished Stories should be disconnected from their features after splitting.";
