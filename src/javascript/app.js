@@ -69,9 +69,9 @@ Ext.define("TSValidationApp", {
     },
     rulesByType: {
         PortfolioItem: [           
-           // {xtype:'tsthemenoproductgoalrule'},
-           // {xtype:'tsinitiativenothemerule'},
-           // {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
+            {xtype:'tsthemenoproductgoalrule'},
+            {xtype:'tsinitiativenothemerule'},
+            {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
         HierarchicalRequirement: [
@@ -270,7 +270,7 @@ _doLayout: function(){
                 //title: 'Apply Selections',
                 //width: 40,
                 height: 80,
-                border: 0,
+                border: 2,
                 layout:{type:'hbox',align: 'right',margin: 10},
                 items:[
                     {
@@ -279,16 +279,16 @@ _doLayout: function(){
                         text: 'Apply Selections',
                         handler: function() {
                             //Ext.Msg.alert('Button', 'You clicked me');
-                            console.log("In the button:",
-                                this,
-                                this.down('#portfolioRuleCheckBox'),
-                                this.down('#portfolioRuleCheckBox').value,
-                                this.down('#storyRuleCheckBox').value,
-                                this.down('#defectRuleCheckBox').value,
-                                this.down('#taskRuleCheckBox').value,
-                                this.down('#releaseSelector').value,
-                                this.down('#iterationSelector').value
-                                );
+                            // console.log("In the button:",
+                            //     this,
+                            //     this.down('#portfolioRuleCheckBox'),
+                            //     this.down('#portfolioRuleCheckBox').value,
+                            //     this.down('#storyRuleCheckBox').value,
+                            //     this.down('#defectRuleCheckBox').value,
+                            //     this.down('#taskRuleCheckBox').value,
+                            //     this.down('#releaseSelector').value,
+                            //     this.down('#iterationSelector').value
+                            //     );
                             this._instantiateValidator();
                         }
                     }
@@ -399,30 +399,34 @@ _updateData: function() {
         //    chartColors: colors
         });
     },
-    
+    // _refreshChart: function(){
+    //     var me = this;
+    //     me.logger.log('_refreshChart');
+    //     // need an itemId for the chart...
+    // },
     _getChartConfig: function() {
         var me = this;
         
         var title_prefix = "";
-        if ( this.getSetting('showPortfolioItemRules') ) {
+        if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix = "Portfolio";
         }
-        if ( this.getSetting('showStoryRules') ) {
+        if ( this.down('#storyRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix += "Story";
         }
-        if ( this.getSetting('showDefectRules') ) {
+        if ( this.down('#defectRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix += "Defect";
         }
-        if ( this.getSetting('showTaskRules')) {
+        if ( this.down('#taskRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += " and ";
             }
