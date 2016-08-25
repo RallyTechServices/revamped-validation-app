@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Aug 23 2016 19:46:54 GMT-0400 (EDT) -->
+    <!--  Build Date: Thu Aug 25 2016 08:50:39 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Aug 23 2016 19:46:54 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Thu Aug 25 2016 08:50:39 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 70912864327;
+        var CHECKSUM = 86271367925;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -435,7 +435,7 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     getFetchFields: function() {
-        return ['Name','Project'];
+        return ['Name','Project','Parent'];
     },
     
     isValidField: function(model, field_name) {
@@ -446,21 +446,21 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-        //console.log("ApplyRuleToRecord:",record);        
+        console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
         } else {
-            var msg = Ext.String.format("Portfolio Initiatives must be saved into {0} or a direct child project, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
+            var msg = Ext.String.format("Portfolio Initiatives must be saved into *{0}*</strong> or a direct child project, not *{1}*.",this.project_PortfolioRoot,record.get('Project').Name);
             return msg;
         }
     },
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+       // return Rally.data.wsapi.Filter.and([
+       //     {property:'Parent',operator:'=',value:null}
+       // ]);
     }
 });
 Ext.define('CA.techservices.validation.StoryCompletedNoActuals',{
@@ -801,6 +801,49 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
         return Rally.data.wsapi.Filter.and([
             {property:'Feature',operator:'!=',value:null},
             {property:'Name',operator: '!contains', value: "[Unfinished]" }
+        ]);
+    }
+});
+Ext.define('CA.techservices.validation.StoryUnfinishedAcceptedRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstoryunfinishedacceptedrule',
+    
+    config: {
+        model: 'HierarchicalRequirement',
+        label: '[Unfinished] Story >= Accepted'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "[Unfinished] Stories should be set to Completed, not Accepted."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['ScheduleState','Name','DirectChildrenCount','AcceptedDate'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //console.log("applyRuleToRecord",record);
+
+        if (( record.get('AcceptedDate') != null ) && (/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
+            var msg = "[Unfinished] Stories should be set to 'Completed', not 'Accepted'.";
+            return msg;   
+        }
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'AcceptedDate',operator:'!=',value: null },
+            {property:'Name',operator: 'contains', value: '[Unfinished]' },
+            {property:'DirectChildrenCount',operator: '<', value: 1 }            
         ]);
     }
 });
@@ -1437,6 +1480,7 @@ Ext.define('CA.techservices.validator.Validator',{
         var deferred = Ext.create('Deft.Deferred');
         var me = this;
         var default_config = {
+            compact: false,   // Awesome technique to get project.parent.project.name!!! 
             model: 'Defect',
             fetch: ['ObjectID']
         };
@@ -1459,18 +1503,32 @@ Ext.define("TSValidationApp", {
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
+    _loaded: false,
     items: [
-        {xtype:'container',itemId:'display_box'}
-    ],
+        { //filter box
+            xtype:'container',
+            itemId:'filters_box',
+            layout: {
+                type: 'hbox',
+                columnWidth: '100%'
+            }
+        },    // end of filter box
+
+        { // main chart display  
+            xtype:'container',
+            itemId:'display_box'
+        }
+    ], // end of app containers
 
     integrationHeaders : {
         name : "TSValidationApp"
     },
     config: {
         defaultSettings: {
+            showPortfolioItemRules: true,
             showStoryRules: true,
-            showTaskRules: false,
-            showPortfolioItemRules: false
+            showDefectRules: false,
+            showTaskRules: false
         }
     },
     getSettingsFields: function() {
@@ -1522,7 +1580,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
+            {xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
@@ -1535,6 +1594,8 @@ Ext.define("TSValidationApp", {
         ]
     },                    
     launch: function() {
+        this._doLayout();
+
         this.validator = this._instantiateValidator();
         
         this.validator.getPrecheckResults().then({
@@ -1620,6 +1681,122 @@ Ext.define("TSValidationApp", {
         }).show();
     },
 
+_doLayout: function(){
+    var me = this;
+    this.down('#filters_box').add([
+            {
+                xtype: 'panel',
+                title: 'Select Rules',
+                layout:{type: 'hbox',align: 'left'},
+                height: 80,
+                items:[
+                {
+                    xtype: 'rallycheckboxfield',
+                    columnWidth: '25%',
+                    margin: 10,
+                    labelSeparator: " ",
+                    boxLabel: 'Portfolio',
+                    boxLabelAlign: 'after',
+                    name: 'portfolioRules',
+                    itemId: 'portfolioRuleCheckBox',
+                    value: true
+                },
+                {
+                    xtype: 'rallycheckboxfield',
+                    columnWidth: '25%',
+                    margin: 10,
+                    boxLabel: 'User Story',
+                    boxLabelAlign: 'after',
+                    name: 'storyRules',
+                    itemId: 'storyRuleCheckBox',
+                    value: true
+                },
+                {
+                    xtype: 'rallycheckboxfield',
+                    columnWidth: '25%',
+                    margin: 10,
+                    boxLabel: 'Defect',
+                    boxLabelAlign: 'after',
+                    name: 'defectRules',
+                    itemId: 'defectRuleCheckBox',
+                    value: true
+                },    
+                {
+                    xtype: 'rallycheckboxfield',
+                    columnWidth: '25%',
+                    margin: 10,   
+                    boxLabel: 'Task',
+                    boxLabelAlign: 'after',
+                    name: 'taskRules',
+                    itemId: 'taskRuleCheckBox',
+                    value: true
+                }    
+                ]
+            },
+            {
+                xtype: 'panel',
+                //title: 'Spacer',
+                width: 40,
+                height: 80,
+                border: 0
+            },
+            {
+                xtype: 'panel',
+                title: 'Select Timeboxes',
+                itemId: 'selectTimeboxes',
+                height: 80,                
+                layout:{type:'hbox',align:'right'},
+                items:[{
+                    xtype: 'rallyiterationcombobox',
+                    itemId: 'iterationSelector',
+                    allowNoEntry: true,
+                    margin: 10,        
+                    fieldLabel: 'Iteration',
+                    labelAlign: 'right',
+                    width: 340
+                    },
+                    {   
+                    xtype: 'rallyreleasecombobox',
+                    itemId: 'releaseSelector',
+                    allowNoEntry: true, 
+                    margin: 10,
+                    fieldLabel: 'Release',
+                    labelAlign: 'right',
+                    width: 340
+                    }], 
+              }, // end of the TimeBox Selectors
+              {
+                xtype: 'panel',
+                //title: 'Apply Selections',
+                //width: 40,
+                height: 80,
+                border: 2,
+                layout:{type:'hbox',align: 'right',margin: 10},
+                items:[
+                    {
+                        xtype: 'rallybutton',
+                        scope: me,
+                        text: 'Apply Selections',
+                        handler: function() {
+                            //Ext.Msg.alert('Button', 'You clicked me');
+                            // console.log("In the button:",
+                            //     this,
+                            //     this.down('#portfolioRuleCheckBox'),
+                            //     this.down('#portfolioRuleCheckBox').value,
+                            //     this.down('#storyRuleCheckBox').value,
+                            //     this.down('#defectRuleCheckBox').value,
+                            //     this.down('#taskRuleCheckBox').value,
+                            //     this.down('#releaseSelector').value,
+                            //     this.down('#iterationSelector').value
+                            //     );
+                            this._instantiateValidator();
+                        }
+                    }
+                ]
+            },
+        ]); // end of items in filter-box)
+        me._loaded = true;
+},
 _updateData: function() {
         var me = this;
         this.setLoading("Loading data...");
@@ -1657,17 +1834,39 @@ _updateData: function() {
         var me = this;
 
         var rules = [];
-        if ( this.getSetting('showPortfolioItemRules') ) {
-            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-        }
-        if ( this.getSetting('showStoryRules') ) {
-            rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
-        }
-        if ( this.getSetting('showDefectRules') ) {
-            rules = Ext.Array.push(rules, this.rulesByType['Defect']);
-        }
-        if ( this.getSetting('showTaskRules') ) {
-            rules = Ext.Array.push(rules, this.rulesByType['Task']);
+        console.log('_instantiateValidator');
+
+        if (me._loaded) {
+        
+        console.log('_instantiateValidatorLoaded');
+            
+            if ( me.down('#portfolioRuleCheckBox').value) {
+                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+            }
+            if ( me.down('#storyRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
+            }
+            if ( me.down('#defectRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+            }
+            if ( me.down('#taskRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, this.rulesByType['Task']);
+            }
+        } else {
+            console.log('_instantiateValidatorFirstTime');
+        
+            if ( this.getSetting('showPortfolioItemRules') ) {
+                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
+            }
+            if ( this.getSetting('showStoryRules') ) {
+                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
+            }
+            if ( this.getSetting('showDefectRules') ) {
+                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+            }
+            if ( this.getSetting('showTaskRules') ) {
+                rules = Ext.Array.push(rules, this.rulesByType['Task']);
+            }
         }
         
         var validator = Ext.create('CA.techservices.validator.Validator',{
@@ -1700,30 +1899,34 @@ _updateData: function() {
         //    chartColors: colors
         });
     },
-    
+    // _refreshChart: function(){
+    //     var me = this;
+    //     me.logger.log('_refreshChart');
+    //     // need an itemId for the chart...
+    // },
     _getChartConfig: function() {
         var me = this;
         
         var title_prefix = "";
-        if ( this.getSetting('showPortfolioItemRules') ) {
+        if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix = "Portfolio";
         }
-        if ( this.getSetting('showStoryRules') ) {
+        if ( this.down('#storyRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix += "Story";
         }
-        if ( this.getSetting('showDefectRules') ) {
+        if ( this.down('#defectRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += ", ";
             }
             title_prefix += "Defect";
         }
-        if ( this.getSetting('showTaskRules')) {
+        if ( this.down('#taskRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += " and ";
             }
@@ -1733,6 +1936,7 @@ _updateData: function() {
         return {
             chart: { type:'column' },
             title: { text: title_prefix + ' Validation Results' },
+            //xAxis: {labels:{rotation:60}},
             xAxis: {},
             yAxis: { 
                 min: 0,
