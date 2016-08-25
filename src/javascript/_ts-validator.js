@@ -286,6 +286,7 @@ Ext.define('CA.techservices.validator.Validator',{
         var deferred = Ext.create('Deft.Deferred');
         var me = this;
         var default_config = {
+            compact: false,   // Awesome technique to get project.parent.project.name!!! 
             model: 'Defect',
             fetch: ['ObjectID']
         };
