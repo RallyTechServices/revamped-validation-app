@@ -6,11 +6,14 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     project_PortfolioRoot: "Global Development",
    
     config: {
-        model: 'PortfolioItem/Theme',
+        //model: 'PortfolioItem/Theme',
         //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot) // #todo - make this work!
         label: Ext.String.format("Theme Project != 'Global Development'")
     },
     
+    getModel: function(){
+        return this.portfolioItemTypes[2];
+    },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,

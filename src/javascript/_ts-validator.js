@@ -37,15 +37,23 @@ Ext.define('CA.techservices.validator.Validator',{
     
     constructor: function(config) {
         Ext.apply(this,config);
+
+console.log("validator-constructor",this,config,config.rules.length);        
         
         var rules = [];
         
-        Ext.Array.each(this.rules, function(rule){
+       // Ext.Array.each(this.rules, function(rule){
+            Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
+
+console.log('validator-constructor-before delete: ', name,rule);
+
             if ( !Ext.isEmpty(name) ) {
-                delete rule.xtype;
-                console.log('Initializing ', name);
-                rules.push(Ext.createByAlias('widget.' + name, rule));
+                var new_rule = Ext.clone(rule);
+                delete new_rule.xtype;
+                // delete rule.xtype;
+                console.log('Initializing ', name,rule);
+                rules.push(Ext.createByAlias('widget.' + name, new_rule));
             }
         });
         
@@ -269,16 +277,18 @@ Ext.define('CA.techservices.validator.Validator',{
         return record_hash;
     },
     
-    getPrecheckResults: function() {        
+    getPrecheckResults: function() {    
+        console.log("GetPreCheckResults",this,this.rules.length,this.rules);    
         var promises = Ext.Array.map(this.rules, function(rule){
             return function() {
                 return rule.precheckRule();
             };
         });
         
-        if ( promises.length === 0 ) {
-            return null;
-        }
+        // debugging...
+        // if ( promises.length === 0 ) {
+        //     return null;
+        // }
         
         return Deft.Chain.sequence(promises);
     },

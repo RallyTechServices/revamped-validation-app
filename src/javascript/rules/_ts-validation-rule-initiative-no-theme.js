@@ -4,10 +4,12 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     
    
     config: {
-        model: 'PortfolioItem/Initiative',
+        //model: 'PortfolioItem/Initiative',
         label: 'Initiative w/o Theme'
     },
-    
+    getModel:function(){
+        return this.portfolioItemTypes[1];
+    },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,

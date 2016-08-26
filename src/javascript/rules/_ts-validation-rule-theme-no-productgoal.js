@@ -4,10 +4,12 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     
    
     config: {
-        model: 'PortfolioItem/Theme',
+        //model: 'PortfolioItem/Theme',
         label: 'Theme w/o Product Goal'
     },
-    
+    getModel: function(){
+        return this.portfolioItemTypes[2];
+    },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,

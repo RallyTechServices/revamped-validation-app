@@ -30,7 +30,7 @@ Ext.define('CA.techservices.validation.BaseRule',{
     getModel: function() {
         return this.model;
     },
-    
+
     getFilters: function() {
         console.error('getFilters not implemented in subclass ', this.self.getName());
         throw 'getFilters not implemented in subclass ' + this.self.getName();

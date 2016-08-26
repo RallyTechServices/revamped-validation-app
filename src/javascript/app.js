@@ -3,7 +3,6 @@ Ext.define("TSValidationApp", {
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
-    _loaded: false,
     items: [
         { //filter box
             xtype:'container',
@@ -23,50 +22,51 @@ Ext.define("TSValidationApp", {
     integrationHeaders : {
         name : "TSValidationApp"
     },
-    config: {
-        defaultSettings: {
-            showPortfolioItemRules: true,
-            showStoryRules: true,
-            showDefectRules: false,
-            showTaskRules: false
-        }
-    },
-    getSettingsFields: function() {
-        return [
-        { 
-            name: 'showPortfolioItemRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
-        },
-        { 
-            name: 'showStoryRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
-        },
-        { 
-            name: 'showDefectRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
-        },
-        { 
-            name: 'showTaskRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
-        }
-        ];
-    },
+    //config: {
+        // defaultSettings: {
+        //     showPortfolioItemRules: true,
+        //     showStoryRules: true,
+        //     showDefectRules: false,
+        //     showTaskRules: false
+        // }
+     //   }
+    //},
+    // getSettingsFields: function() {
+    //     return [
+    //     { 
+    //         name: 'showPortfolioItemRules',
+    //         xtype: 'rallycheckboxfield',
+    //         boxLabelAlign: 'after',
+    //         fieldLabel: '',
+    //         margin: '0 0 25 200',
+    //         boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
+    //     },
+    //     { 
+    //         name: 'showStoryRules',
+    //         xtype: 'rallycheckboxfield',
+    //         boxLabelAlign: 'after',
+    //         fieldLabel: '',
+    //         margin: '0 0 25 200',
+    //         boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
+    //     },
+    //     { 
+    //         name: 'showDefectRules',
+    //         xtype: 'rallycheckboxfield',
+    //         boxLabelAlign: 'after',
+    //         fieldLabel: '',
+    //         margin: '0 0 25 200',
+    //         boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
+    //     },
+    //     { 
+    //         name: 'showTaskRules',
+    //         xtype: 'rallycheckboxfield',
+    //         boxLabelAlign: 'after',
+    //         fieldLabel: '',
+    //         margin: '0 0 25 200',
+    //         boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
+    //     }
+    //     ];
+    // },
     rulesByType: {
         PortfolioItem: [           
             {xtype:'tsthemenoproductgoalrule'},
@@ -94,34 +94,38 @@ Ext.define("TSValidationApp", {
         ]
     },                    
     launch: function() {
-        this._doLayout();
-
-        this.validator = this._instantiateValidator();
-        
-        this.validator.getPrecheckResults().then({
-            scope: this,
-            success: function(issues) {
-                
-                var messages = Ext.Array.filter(issues, function(issue){
-                    return !Ext.isEmpty(issue);
-                });
-                
-                if ( messages.length > 0 ) {
-                    var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
-                    Ext.Array.each(messages, function(message){
-                        append_text += '<li>' + message + '</li>';
-                    });
-                    append_text += "</ul>";
-                    
-                    this.logger.log(append_text);
-                }
-                
-                this._updateData();
-            },
-            failure: function(msg) {
-                Ext.Msg.alert('Problem with precheck', msg);
-            }
+        this._fetchPortfolioItemTypes().then({
+            success: this._initializeApp, 
+            failure: this._showErrorMsg,
+            scope: this
         });
+        
+        // this.validator = this._instantiateValidator();
+        
+        // this.validator.getPrecheckResults().then({
+        //     scope: this,
+        //     success: function(issues) {
+                
+        //         var messages = Ext.Array.filter(issues, function(issue){
+        //             return !Ext.isEmpty(issue);
+        //         });
+                
+        //         if ( messages.length > 0 ) {
+        //             var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
+        //             Ext.Array.each(messages, function(message){
+        //                 append_text += '<li>' + message + '</li>';
+        //             });
+        //             append_text += "</ul>";
+                    
+        //             this.logger.log(append_text);
+        //         }
+                
+        //         this._updateData();
+        //     },
+        //     failure: function(msg) {
+        //         Ext.Msg.alert('Problem with precheck', msg);
+        //     }
+        //});
         
     },
 
@@ -180,7 +184,45 @@ Ext.define("TSValidationApp", {
             }]
         }).show();
     },
+    _initializeApp: function(portfolioItemTypes){
+        this.logger.log('InitializeApp',portfolioItemTypes);
+        Ext.Array.each(this.rulesByType.PortfolioItem, function(pi){
+            pi.portfolioItemTypes = portfolioItemTypes;
+        })
+        this.portfolioItemTypes = portfolioItemTypes;
 
+        console.log("_initializeApp after assign:",this.rulesByType);
+        
+        this._doLayout();
+        this._loadData();
+    },
+    _showErrorMsg: function(msg){
+        Rally.ui.notify.Notifier.showError({message:msg});
+    },
+    _fetchPortfolioItemTypes: function(){
+        var deferred = Ext.create('Deft.Deferred');
+        Ext.create('Rally.data.wsapi.Store',{
+            model: 'typedefinition',
+            fetch:['TypePath','Ordinal'],
+            filters: [{property:'TypePath',operator:'contains',value:'PortfolioItem/'}],
+            sorters: [{property:'Ordinal',direction:'ASC'}]
+        }).load({
+            callback: function(records,operation){
+                if (operation.wasSuccessful()){
+                    var portfolioItemArray = [];
+                    Ext.Array.each(records,function(rec){
+                        portfolioItemArray.push(rec.get('TypePath'));
+                    });
+                    deferred.resolve(portfolioItemArray);
+                } else {
+                    var message = 'failed to load Portfolio Item Types ' + (operation.error && operation.error.errors.join(','));
+                    deferred.reject(message);
+                }
+            }
+        })
+        
+        return deferred;
+    },
 _doLayout: function(){
     var me = this;
     this.down('#filters_box').add([
@@ -199,6 +241,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'portfolioRules',
                     itemId: 'portfolioRuleCheckBox',
+                    stateful: true,
+                    stateId: 'portfolioRuleCheckBox',
                     value: true
                 },
                 {
@@ -209,6 +253,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'storyRules',
                     itemId: 'storyRuleCheckBox',
+                    stateful: true,
+                    stateId: 'userStoryRuleCheckBox',
                     value: true
                 },
                 {
@@ -219,6 +265,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'defectRules',
                     itemId: 'defectRuleCheckBox',
+                    stateful: true,
+                    stateId: 'defectRuleCheckBox',
                     value: true
                 },    
                 {
@@ -229,6 +277,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'taskRules',
                     itemId: 'taskRuleCheckBox',
+                    stateful: true,
+                    stateId: 'taskRuleCheckBox',
                     value: true
                 }    
                 ]
@@ -267,35 +317,66 @@ _doLayout: function(){
               }, // end of the TimeBox Selectors
               {
                 xtype: 'panel',
-                //title: 'Apply Selections',
-                //width: 40,
                 height: 80,
-                border: 2,
+                border: 0,
                 layout:{type:'hbox',align: 'right',margin: 10},
                 items:[
                     {
                         xtype: 'rallybutton',
                         scope: me,
+                        margin: '40 0 0 10', //top right bottom left
                         text: 'Apply Selections',
                         handler: function() {
                             //Ext.Msg.alert('Button', 'You clicked me');
-                            // console.log("In the button:",
-                            //     this,
-                            //     this.down('#portfolioRuleCheckBox'),
-                            //     this.down('#portfolioRuleCheckBox').value,
-                            //     this.down('#storyRuleCheckBox').value,
-                            //     this.down('#defectRuleCheckBox').value,
-                            //     this.down('#taskRuleCheckBox').value,
-                            //     this.down('#releaseSelector').value,
-                            //     this.down('#iterationSelector').value
-                            //     );
-                            this._instantiateValidator();
+                             console.log("In the button:",
+                                this,
+                                this.down('#portfolioRuleCheckBox'),
+                                this.down('#portfolioRuleCheckBox').value,
+                                this.down('#storyRuleCheckBox').value,
+                                this.down('#defectRuleCheckBox').value,
+                                this.down('#taskRuleCheckBox').value,
+                                this.down('#releaseSelector').value,
+                                this.down('#iterationSelector').value
+
+                                );
+                            me._loadData();    
                         }
                     }
                 ]
             },
         ]); // end of items in filter-box)
         me._loaded = true;
+},
+_loadData: function(){
+    if (this.validator){
+        this.validator = null;
+    }
+    this.validator = this._instantiateValidator();
+    
+    this.validator.getPrecheckResults().then({
+        scope: this,
+        success: function(issues) {
+            
+            var messages = Ext.Array.filter(issues, function(issue){
+                return !Ext.isEmpty(issue);
+            });
+            
+            if ( messages.length > 0 ) {
+                var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
+                Ext.Array.each(messages, function(message){
+                    append_text += '<li>' + message + '</li>';
+                });
+                append_text += "</ul>";
+                
+                this.logger.log(append_text);
+            }
+            
+            this._updateData();
+        },
+        failure: function(msg) {
+            Ext.Msg.alert('Problem with precheck', msg);
+        }
+    });
 },
 _updateData: function() {
         var me = this;
@@ -320,8 +401,8 @@ _updateData: function() {
                 }
                 
                 this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
-                
-                this._makeChart(results);
+
+                this._makeChart(results);  
             },
             failure: function(msg) {
                 Ext.Msg.alert('Problem loading data', msg);
@@ -334,56 +415,38 @@ _updateData: function() {
         var me = this;
 
         var rules = [];
-        console.log('_instantiateValidator');
 
-        if (me._loaded) {
-        
-        console.log('_instantiateValidatorLoaded');
-            
-            if ( me.down('#portfolioRuleCheckBox').value) {
-                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-            }
-            if ( me.down('#storyRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
-            }
-            if ( me.down('#defectRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
-            }
-            if ( me.down('#taskRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Task']);
-            }
-        } else {
-            console.log('_instantiateValidatorFirstTime');
-        
-            if ( this.getSetting('showPortfolioItemRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-            }
-            if ( this.getSetting('showStoryRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
-            }
-            if ( this.getSetting('showDefectRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
-            }
-            if ( this.getSetting('showTaskRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Task']);
-            }
+console.log("_instantiateValidate:", this.rulesByType);
+
+        if ( me.down('#portfolioRuleCheckBox').value) {
+            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
         }
-        
+        if ( me.down('#storyRuleCheckBox').value ) {
+            rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
+        }
+        if ( me.down('#defectRuleCheckBox').value ) {
+            rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+        }
+        if ( me.down('#taskRuleCheckBox').value ) {
+            rules = Ext.Array.push(rules, this.rulesByType['Task']);
+        }
+
+console.log("_instantiateValidator:",rules);
+
         var validator = Ext.create('CA.techservices.validator.Validator',{
             rules: rules,
             fetchFields: ['FormattedID','ObjectID'],
-//            baseFilters:{ 
-//                 HierarchicalRequirement: {},
-//                 Task: {}
-//             },
+// **           baseFilters:{ 
+// **                HierarchicalRequirement: {},
+// **                Task: {}
+// **            },
             pointEvents: {
                 click: function() {
                    me.showDrillDown(this._records,this._name);
                 }
             }
         });
-        
-        return validator;
+        return validator;        
     },
     _makeChart: function(data) {
         var me = this;
@@ -391,19 +454,20 @@ _updateData: function() {
         this.logger.log('_makeChart', data);
       //  var colors = CA.apps.charts.Colors.getConsistentBarColors();
         
+        // destroy any existing version of the chart before creating a new one
+        this.down('#display_box').removeAll();
+
+        // now go ahead and create the new chart.
         this.down("#display_box").add({
             chartData: data,
             xtype:'rallychart',
+            itemId: 'validationChart',
             loadMask: false,
             chartConfig: this._getChartConfig()  //,
         //    chartColors: colors
         });
     },
-    // _refreshChart: function(){
-    //     var me = this;
-    //     me.logger.log('_refreshChart');
-    //     // need an itemId for the chart...
-    // },
+
     _getChartConfig: function() {
         var me = this;
         
