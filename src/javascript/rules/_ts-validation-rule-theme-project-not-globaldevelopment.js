@@ -6,13 +6,17 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     project_PortfolioRoot: "Global Development",
    
     config: {
+        /*
+        * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+        * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+        */
+        portfolioItemTypes:[],
         //model: 'PortfolioItem/Theme',
-        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot) // #todo - make this work!
         label: Ext.String.format("Theme Project != 'Global Development'")
     },
     
     getModel: function(){
-        return this.portfolioItemTypes[2];
+        return this.portfolioItemTypes[2]; // 0-feature, 1-initiative
     },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",

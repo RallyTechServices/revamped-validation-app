@@ -4,11 +4,16 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     
    
     config: {
+        /*
+        * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+        * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+        */
+        portfolioItemTypes:[],
         //model: 'PortfolioItem/Initiative',
         label: 'Initiative w/o Theme'
     },
     getModel:function(){
-        return this.portfolioItemTypes[1];
+        return this.portfolioItemTypes[1];  // 0-feature,1-initiative, etc..
     },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",

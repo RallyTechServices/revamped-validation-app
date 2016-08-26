@@ -22,66 +22,47 @@ Ext.define("TSValidationApp", {
     integrationHeaders : {
         name : "TSValidationApp"
     },
-    //config: {
-        // defaultSettings: {
-        //     showPortfolioItemRules: true,
-        //     showStoryRules: true,
-        //     showDefectRules: false,
-        //     showTaskRules: false
-        // }
-     //   }
-    //},
-    // getSettingsFields: function() {
-    //     return [
-    //     { 
-    //         name: 'showPortfolioItemRules',
-    //         xtype: 'rallycheckboxfield',
-    //         boxLabelAlign: 'after',
-    //         fieldLabel: '',
-    //         margin: '0 0 25 200',
-    //         boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
-    //     },
-    //     { 
-    //         name: 'showStoryRules',
-    //         xtype: 'rallycheckboxfield',
-    //         boxLabelAlign: 'after',
-    //         fieldLabel: '',
-    //         margin: '0 0 25 200',
-    //         boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
-    //     },
-    //     { 
-    //         name: 'showDefectRules',
-    //         xtype: 'rallycheckboxfield',
-    //         boxLabelAlign: 'after',
-    //         fieldLabel: '',
-    //         margin: '0 0 25 200',
-    //         boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
-    //     },
-    //     { 
-    //         name: 'showTaskRules',
-    //         xtype: 'rallycheckboxfield',
-    //         boxLabelAlign: 'after',
-    //         fieldLabel: '',
-    //         margin: '0 0 25 200',
-    //         boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
-    //     }
-    //     ];
-    // },
+    config: {
+        defaultSettings: {
+            rootPortfolioProject: 'Global Development',
+            showSchedulable: false            
+        }
+    },
+    getSettingsFields: function() {
+         return [
+         {  
+            name: 'rootPortfolioProject',
+            xtype: 'rallytextfield',
+            fieldLabel: 'Name of root Portfolio Item project:'
+         },
+         { 
+            name: 'showSchedulable',
+            xtype: 'rallycheckboxfield',
+            boxLabelAlign: 'after',
+            fieldLabel: '',
+            margin: '0 0 25 200',
+            boxLabel: 'Show only schedulable artifacts: Features, User Stories, Defects and Tasks.'
+         }
+         ];
+    },
     rulesByType: {
-        PortfolioItem: [           
+        PortfolioItemTimeboxNo: [ // Initiatives and higher          
             {xtype:'tsthemenoproductgoalrule'},
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
+//        PortfolioItemTimeboxYes: [ // Features into Releases
+//
+//        ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
             {xtype:'tsstorynofeatureexcludeunfinishedrule' },
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
-            {xtype:'tsstoryunfinishedacceptedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
@@ -98,35 +79,7 @@ Ext.define("TSValidationApp", {
             success: this._initializeApp, 
             failure: this._showErrorMsg,
             scope: this
-        });
-        
-        // this.validator = this._instantiateValidator();
-        
-        // this.validator.getPrecheckResults().then({
-        //     scope: this,
-        //     success: function(issues) {
-                
-        //         var messages = Ext.Array.filter(issues, function(issue){
-        //             return !Ext.isEmpty(issue);
-        //         });
-                
-        //         if ( messages.length > 0 ) {
-        //             var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
-        //             Ext.Array.each(messages, function(message){
-        //                 append_text += '<li>' + message + '</li>';
-        //             });
-        //             append_text += "</ul>";
-                    
-        //             this.logger.log(append_text);
-        //         }
-                
-        //         this._updateData();
-        //     },
-        //     failure: function(msg) {
-        //         Ext.Msg.alert('Problem with precheck', msg);
-        //     }
-        //});
-        
+        });        
     },
 
       showDrillDown: function(records, title) {
@@ -185,10 +138,14 @@ Ext.define("TSValidationApp", {
         }).show();
     },
     _initializeApp: function(portfolioItemTypes){
+        
         this.logger.log('InitializeApp',portfolioItemTypes);
-        Ext.Array.each(this.rulesByType.PortfolioItem, function(pi){
-            pi.portfolioItemTypes = portfolioItemTypes;
+
+        // add the array of portfolioItem Type names to each rule as we instantiate it
+        Ext.Array.each(this.rulesByType.PortfolioItemTimeboxNo, function(rule){
+            rule.portfolioItemTypes = portfolioItemTypes;
         })
+        // add the array to the app as well.
         this.portfolioItemTypes = portfolioItemTypes;
 
         console.log("_initializeApp after assign:",this.rulesByType);
@@ -223,9 +180,11 @@ Ext.define("TSValidationApp", {
         
         return deferred;
     },
-_doLayout: function(){
-    var me = this;
-    this.down('#filters_box').add([
+
+    _doLayout: function(){
+        var me = this;
+        
+        this.down('#filters_box').add([
             {
                 xtype: 'panel',
                 title: 'Select Rules',
@@ -328,57 +287,48 @@ _doLayout: function(){
                         text: 'Apply Selections',
                         handler: function() {
                             //Ext.Msg.alert('Button', 'You clicked me');
-                             console.log("In the button:",
-                                this,
-                                this.down('#portfolioRuleCheckBox'),
-                                this.down('#portfolioRuleCheckBox').value,
-                                this.down('#storyRuleCheckBox').value,
-                                this.down('#defectRuleCheckBox').value,
-                                this.down('#taskRuleCheckBox').value,
-                                this.down('#releaseSelector').value,
-                                this.down('#iterationSelector').value
-
-                                );
+                            console.log("In the button:",
+                                this.getSetting('showSchedulable'),
+                                this.getSetting('rootPortfolioProject')
+                            );
                             me._loadData();    
                         }
                     }
                 ]
             },
         ]); // end of items in filter-box)
-        me._loaded = true;
-},
-_loadData: function(){
-    if (this.validator){
-        this.validator = null;
-    }
-    this.validator = this._instantiateValidator();
-    
-    this.validator.getPrecheckResults().then({
-        scope: this,
-        success: function(issues) {
-            
-            var messages = Ext.Array.filter(issues, function(issue){
-                return !Ext.isEmpty(issue);
-            });
-            
-            if ( messages.length > 0 ) {
-                var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
-                Ext.Array.each(messages, function(message){
-                    append_text += '<li>' + message + '</li>';
-                });
-                append_text += "</ul>";
+    },
+
+    _loadData: function(){
+        this.validator = this._instantiateValidator();
+        
+        this.validator.getPrecheckResults().then({
+            scope: this,
+            success: function(issues) {
                 
-                this.logger.log(append_text);
+                var messages = Ext.Array.filter(issues, function(issue){
+                    return !Ext.isEmpty(issue);
+                });
+                
+                if ( messages.length > 0 ) {
+                    var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
+                    Ext.Array.each(messages, function(message){
+                        append_text += '<li>' + message + '</li>';
+                    });
+                    append_text += "</ul>";
+                    
+                    this.logger.log(append_text);
+                }
+                
+                this._updateData();
+            },
+            failure: function(msg) {
+                Ext.Msg.alert('Problem with precheck', msg);
             }
-            
-            this._updateData();
-        },
-        failure: function(msg) {
-            Ext.Msg.alert('Problem with precheck', msg);
-        }
-    });
-},
-_updateData: function() {
+        });
+    },
+
+    _updateData: function() {
         var me = this;
         this.setLoading("Loading data...");
         
@@ -407,31 +357,37 @@ _updateData: function() {
             failure: function(msg) {
                 Ext.Msg.alert('Problem loading data', msg);
             }
-        }).always(function() { me.setLoading(false); });
-        
+        }).always(function() { me.setLoading(false); });    
     }, 
     
     _instantiateValidator: function() {
         var me = this;
 
         var rules = [];
+        
+        me.logger.log('_instantiateValidator',me);
 
-console.log("_instantiateValidate:", this.rulesByType);
-
-        if ( me.down('#portfolioRuleCheckBox').value) {
-            rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-        }
-        if ( me.down('#storyRuleCheckBox').value ) {
-            rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
-        }
-        if ( me.down('#defectRuleCheckBox').value ) {
-            rules = Ext.Array.push(rules, this.rulesByType['Defect']);
-        }
-        if ( me.down('#taskRuleCheckBox').value ) {
-            rules = Ext.Array.push(rules, this.rulesByType['Task']);
-        }
-
-console.log("_instantiateValidator:",rules);
+        // ************************
+        // Initiatives and Higher are not schedule-able.
+        if ( me.getSetting('showSchedulable')) {
+            // ** we don't have any Feature Rules ***
+            //if ( me.down('#portfolioRuleCheckBox').value) {
+            //    rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxYes']);
+            //}    
+            if ( me.down('#storyRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, me.rulesByType['HierarchicalRequirement']);
+            }
+            if ( me.down('#defectRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, me.rulesByType['Defect']);
+            }
+            if ( me.down('#taskRuleCheckBox').value ) {
+                rules = Ext.Array.push(rules, me.rulesByType['Task']);
+            }       
+        } else { // only show high level Portfolio Item rules
+            if ( me.down('#portfolioRuleCheckBox').value) {
+                rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxNo']);
+            }
+        } // end of rulesByType filtering
 
         var validator = Ext.create('CA.techservices.validator.Validator',{
             rules: rules,
@@ -448,6 +404,7 @@ console.log("_instantiateValidator:",rules);
         });
         return validator;        
     },
+
     _makeChart: function(data) {
         var me = this;
         
@@ -513,6 +470,7 @@ console.log("_instantiateValidator:",rules);
             }
         }
     },
+    
     _loadAStoreWithAPromise: function(model_name, model_fields){
         var deferred = Ext.create('Deft.Deferred');
         var me = this;

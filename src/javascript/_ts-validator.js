@@ -38,7 +38,7 @@ Ext.define('CA.techservices.validator.Validator',{
     constructor: function(config) {
         Ext.apply(this,config);
 
-console.log("validator-constructor",this,config,config.rules.length);        
+//console.log("validator-constructor",this,config,config.rules.length);        
         
         var rules = [];
         
@@ -46,12 +46,12 @@ console.log("validator-constructor",this,config,config.rules.length);
             Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
 
-console.log('validator-constructor-before delete: ', name,rule);
+//console.log('validator-constructor-before delete: ', name,rule);
 
             if ( !Ext.isEmpty(name) ) {
                 var new_rule = Ext.clone(rule);
                 delete new_rule.xtype;
-                // delete rule.xtype;
+                // delete rule.xtype; // # confirm
                 console.log('Initializing ', name,rule);
                 rules.push(Ext.createByAlias('widget.' + name, new_rule));
             }
@@ -285,10 +285,9 @@ console.log('validator-constructor-before delete: ', name,rule);
             };
         });
         
-        // debugging...
-        // if ( promises.length === 0 ) {
-        //     return null;
-        // }
+        if ( promises.length === 0 ) {
+            return null;
+        }
         
         return Deft.Chain.sequence(promises);
     },

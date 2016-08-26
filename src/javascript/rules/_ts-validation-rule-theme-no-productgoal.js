@@ -4,11 +4,16 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     
    
     config: {
+        /*
+        * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+        * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+        */
+        portfolioItemTypes:[],
         //model: 'PortfolioItem/Theme',
         label: 'Theme w/o Product Goal'
     },
     getModel: function(){
-        return this.portfolioItemTypes[2];
+        return this.portfolioItemTypes[2];  // 0-feature, 1-initiative, etc...
     },
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
