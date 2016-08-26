@@ -2,11 +2,15 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsthemeprojectnotglobaldevelopmentrule',
     
-    // Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
-    project_PortfolioRoot: "Global Development",
-   
+    
     config: {
-        /*
+       /* 
+        * [{}] a Target root project for high-levelpassed in from calling routine. 
+        * Retrieves from appSettings 
+        * Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
+        */
+        projectPortfolioRoot: null,
+       /*
         * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
         * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
         */
@@ -19,9 +23,10 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
         return this.portfolioItemTypes[2]; // 0-feature, 1-initiative
     },
     getDescription: function() {
-        return Ext.String.format("<strong>{0}</strong>: {1}",
+        return Ext.String.format("<strong>{0}</strong>: {1} should be in the *{2}* project.",
             this.label,
-            "Themes must be in the ", this.project_PortfolioRoot," Project."
+            this.getModel(),
+            this.projectPortfolioRoot
         );
     },
     
@@ -37,8 +42,8 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     applyRuleToRecord: function(record) {
         //var missingFields = [];
 
-        if ( record.get('Project').Name != this.project_PortfolioRoot )  {
-            var msg = Ext.String.format("Portfolio Themes must be saved into {0}, not {1}.",this.project_PortfolioRoot,record.get('Project').Name);
+        if ( record.get('Project').Name != this.projectPortfolioRoot )  {
+            var msg = Ext.String.format("{0} must be saved into *{1}*, not *{2}*.",this.getModel(),this.projectPortfolioRoot,record.get('Project').Name);
             return msg;   
         } else {
             return null; // no rule violation

@@ -52,9 +52,9 @@ Ext.define("TSValidationApp", {
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
-//        PortfolioItemTimeboxYes: [ // Features into Releases
-//
-//        ],
+        PortfolioItemTimeboxYes: [ // Features into Releases
+
+        ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
             {xtype:'tsstorynofeatureexcludeunfinishedrule' },
@@ -138,20 +138,28 @@ Ext.define("TSValidationApp", {
         }).show();
     },
     _initializeApp: function(portfolioItemTypes){
+        var me = this;
         
-        this.logger.log('InitializeApp',portfolioItemTypes);
+        me.logger.log('InitializeApp',portfolioItemTypes);
 
-        // add the array of portfolioItem Type names to each rule as we instantiate it
-        Ext.Array.each(this.rulesByType.PortfolioItemTimeboxNo, function(rule){
+        // add the array of portfolioItem Type names to each portfolio rule as we instantiate it
+        // also grab appSetting for a target folder to hold high-level portfolio items
+        Ext.Array.each(me.rulesByType.PortfolioItemTimeboxNo, function(rule){
             rule.portfolioItemTypes = portfolioItemTypes;
-        })
-        // add the array to the app as well.
-        this.portfolioItemTypes = portfolioItemTypes;
-
-        console.log("_initializeApp after assign:",this.rulesByType);
+            rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
+        });
+        Ext.Array.each(me.rulesByType.PortfolioItemTimeboxYes, function(rule){
+            rule.portfolioItemTypes = portfolioItemTypes;
+            rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
+        });
         
-        this._doLayout();
-        this._loadData();
+        // add the array to the app as well.
+        me.portfolioItemTypes = portfolioItemTypes;
+
+        console.log("_initializeApp after assign:",me.rulesByType);
+        
+        me._doLayout();
+        me._loadData();
     },
     _showErrorMsg: function(msg){
         Rally.ui.notify.Notifier.showError({message:msg});
