@@ -82,7 +82,7 @@ Ext.define("TSValidationApp", {
         });        
     },
 
-      showDrillDown: function(records, title) {
+    showDrillDown: function(records, title) {
         var me = this;
 
         var store = Ext.create('Rally.data.custom.Store', {
@@ -195,7 +195,7 @@ Ext.define("TSValidationApp", {
         this.down('#filters_box').add([
             {
                 xtype: 'panel',
-                title: 'Select Rules',
+                title: 'Rule(s)',
                 itemId: 'selectRulesPanel',
                 layout:{
                     type: 'hbox',
@@ -205,6 +205,9 @@ Ext.define("TSValidationApp", {
             },
         ]);
         if (!this.getSetting('showSchedulable')){
+            // update the filters-box title (no selection offered)
+            this.down('#selectRulesPanel').setTitle('Rule');
+
             // only show high-level portfolio rules
             this.down('#selectRulesPanel').add([
                 {
@@ -224,6 +227,9 @@ Ext.define("TSValidationApp", {
                 },
             ]);
         } else {
+            // update the selectRulesPanel title ('Select Rules')
+            this.down('#selectRulesPanel').setTitle('Select Rules to Display');
+
             // show Stories/Defects/Tasks (no Feature Rules so far)
             this.down('#selectRulesPanel').add([
                 {

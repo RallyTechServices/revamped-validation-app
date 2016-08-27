@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Sat Aug 27 2016 05:51:13 GMT-0400 (EDT) -->
+    <!--  Build Date: Sat Aug 27 2016 06:23:05 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Aug 27 2016 05:51:13 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Sat Aug 27 2016 06:23:05 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 102515162142;
+        var CHECKSUM = 103395125300;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -1676,7 +1676,7 @@ Ext.define("TSValidationApp", {
         });        
     },
 
-      showDrillDown: function(records, title) {
+    showDrillDown: function(records, title) {
         var me = this;
 
         var store = Ext.create('Rally.data.custom.Store', {
@@ -1789,7 +1789,7 @@ Ext.define("TSValidationApp", {
         this.down('#filters_box').add([
             {
                 xtype: 'panel',
-                title: 'Select Rules',
+                title: 'Rule(s)',
                 itemId: 'selectRulesPanel',
                 layout:{
                     type: 'hbox',
@@ -1799,6 +1799,9 @@ Ext.define("TSValidationApp", {
             },
         ]);
         if (!this.getSetting('showSchedulable')){
+            // update the filters-box title (no selection offered)
+            this.down('#selectRulesPanel').setTitle('Rule');
+
             // only show high-level portfolio rules
             this.down('#selectRulesPanel').add([
                 {
@@ -1818,6 +1821,9 @@ Ext.define("TSValidationApp", {
                 },
             ]);
         } else {
+            // update the selectRulesPanel title ('Select Rules')
+            this.down('#selectRulesPanel').setTitle('Select Rules to Display');
+
             // show Stories/Defects/Tasks (no Feature Rules so far)
             this.down('#selectRulesPanel').add([
                 {
