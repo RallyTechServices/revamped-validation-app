@@ -191,14 +191,22 @@ Ext.define("TSValidationApp", {
 
     _doLayout: function(){
         var me = this;
-        
+        // add checkbox panel to select rules
         this.down('#filters_box').add([
             {
                 xtype: 'panel',
                 title: 'Select Rules',
-                layout:{type: 'hbox',align: 'left'},
+                itemId: 'selectRulesPanel',
+                layout:{
+                    type: 'hbox',
+                    align: 'left'
+                },
                 height: 80,
-                items:[
+            },
+        ]);
+        if (!this.getSetting('showSchedulable')){
+            // only show high-level portfolio rules
+            this.down('#selectRulesPanel').add([
                 {
                     xtype: 'rallycheckboxfield',
                     columnWidth: '25%',
@@ -210,8 +218,14 @@ Ext.define("TSValidationApp", {
                     itemId: 'portfolioRuleCheckBox',
                     stateful: true,
                     stateId: 'portfolioRuleCheckBox',
+                    //disabled: true,
+                    readOnly: true, // a little nicer display than disabled.
                     value: true
                 },
+            ]);
+        } else {
+            // show Stories/Defects/Tasks (no Feature Rules so far)
+            this.down('#selectRulesPanel').add([
                 {
                     xtype: 'rallycheckboxfield',
                     columnWidth: '25%',
@@ -247,66 +261,67 @@ Ext.define("TSValidationApp", {
                     stateful: true,
                     stateId: 'taskRuleCheckBox',
                     value: true
-                }    
-                ]
-            },
-            {
-                xtype: 'panel',
-                //title: 'Spacer',
-                width: 40,
-                height: 80,
-                border: 0
-            },
-            {
-                xtype: 'panel',
-                title: 'Select Timeboxes',
-                itemId: 'selectTimeboxes',
-                height: 80,                
-                layout:{type:'hbox',align:'right'},
-                items:[{
-                    xtype: 'rallyiterationcombobox',
-                    itemId: 'iterationSelector',
-                    allowNoEntry: true,
-                    margin: 10,        
-                    fieldLabel: 'Iteration',
-                    labelAlign: 'right',
-                    width: 340
-                    },
-                    {   
-                    xtype: 'rallyreleasecombobox',
-                    itemId: 'releaseSelector',
-                    allowNoEntry: true, 
-                    margin: 10,
-                    fieldLabel: 'Release',
-                    labelAlign: 'right',
-                    width: 340
-                    }], 
-              }, // end of the TimeBox Selectors
-              {
-                xtype: 'panel',
-                height: 80,
-                border: 0,
-                layout:{type:'hbox',align: 'right',margin: 10},
-                items:[
-                    {
-                        xtype: 'rallybutton',
-                        scope: me,
-                        margin: '40 0 0 10', //top right bottom left
-                        text: 'Apply Selections',
-                        handler: function() {
-                            //Ext.Msg.alert('Button', 'You clicked me');
-                            console.log("In the button:",
-                                this.getSetting('showSchedulable'),
-                                this.getSetting('rootPortfolioProject')
-                            );
-                            me._loadData();    
+                }
+            ]);
+            // add the spacer panel after the rule-selector panel
+            this.down('#filters_box').add([
+                {
+                    xtype: 'panel',
+                    //title: 'Spacer',
+                    width: 40,
+                    height: 80,
+                    border: 0
+                },
+                {
+                    xtype: 'panel',
+                    title: 'Select Timeboxes',
+                    itemId: 'selectTimeboxes',
+                    height: 80,                
+                    layout:{type:'hbox',align:'right'},
+                    items:[{
+                        xtype: 'rallyiterationcombobox',
+                        itemId: 'iterationSelector',
+                        allowNoEntry: true,
+                        margin: 10,        
+                        fieldLabel: 'Iteration',
+                        labelAlign: 'right',
+                        width: 340
+                        },
+                        {   
+                        xtype: 'rallyreleasecombobox',
+                        itemId: 'releaseSelector',
+                        allowNoEntry: true, 
+                        margin: 10,
+                        fieldLabel: 'Release',
+                        labelAlign: 'right',
+                        width: 340
+                        }] 
+                }, // end of the TimeBox Selectors
+                {
+                    xtype: 'panel',
+                    height: 80,
+                    border: 0,
+                    layout:{type:'hbox',align: 'right',margin: 10},
+                    items:[
+                        {
+                            xtype: 'rallybutton',
+                            scope: me,
+                            margin: '40 0 0 10', //top right bottom left
+                            text: 'Apply Selections',
+                            handler: function() {
+                                //Ext.Msg.alert('Button', 'You clicked me');
+                                console.log("In the button:",
+                                    this.getSetting('showSchedulable'),
+                                    this.getSetting('rootPortfolioProject')
+                                );
+                                me._loadData();    
+                            }
                         }
-                    }
-                ]
-            },
-        ]); // end of items in filter-box)
+                    ]
+                }
+            ]);
+        }
     },
-
     _loadData: function(){
         this.validator = this._instantiateValidator();
         
