@@ -282,6 +282,8 @@ Ext.define("TSValidationApp", {
                         xtype: 'rallyiterationcombobox',
                         itemId: 'iterationSelector',
                         allowNoEntry: true,
+                        defaultToCurrentTimebox: false,
+                        defaultSelectionPosition: 'first',
                         margin: 10,        
                         fieldLabel: 'Iteration',
                         labelAlign: 'right',
@@ -290,6 +292,8 @@ Ext.define("TSValidationApp", {
                         {   
                         xtype: 'rallyreleasecombobox',
                         itemId: 'releaseSelector',
+                        defaultToCurrentTimebox: false,
+                        defaultSelectionPosition: 'first',
                         allowNoEntry: true, 
                         margin: 10,
                         fieldLabel: 'Release',

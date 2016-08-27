@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Fri Aug 26 2016 21:00:17 GMT-0400 (EDT) -->
+    <!--  Build Date: Sat Aug 27 2016 05:48:05 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Fri Aug 26 2016 21:00:17 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Sat Aug 27 2016 05:48:05 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 101782957701;
+        var CHECKSUM = 102358156808;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -1876,6 +1876,8 @@ Ext.define("TSValidationApp", {
                         xtype: 'rallyiterationcombobox',
                         itemId: 'iterationSelector',
                         allowNoEntry: true,
+                        defaultToCurrentTimebox: false,
+                        defaultSelectionPosition: 'first',
                         margin: 10,        
                         fieldLabel: 'Iteration',
                         labelAlign: 'right',
@@ -1884,6 +1886,8 @@ Ext.define("TSValidationApp", {
                         {   
                         xtype: 'rallyreleasecombobox',
                         itemId: 'releaseSelector',
+                        defaultToCurrentTimebox: false,
+                        defaultSelectionPosition: 'first',
                         allowNoEntry: true, 
                         margin: 10,
                         fieldLabel: 'Release',
