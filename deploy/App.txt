@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Sat Aug 27 2016 06:23:05 GMT-0400 (EDT) -->
+    <!--  Build Date: Sat Aug 27 2016 06:40:25 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Aug 27 2016 06:23:05 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Sat Aug 27 2016 06:40:25 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 103395125300;
+        var CHECKSUM = 102477037940;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -458,13 +458,14 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     getDescription: function() {
-
         console.log("InitiativeWrongProject:",this);
-
-        return Ext.String.format("<strong>{0}</strong>: Should be in *{1}* or a direct child project.",
-            this.getLabel(),
+        
+        var msg = Ext.String.format(
+            "{0} must be saved into *{1}* or a direct child project.",
+            /[^\/]*$/.exec(this.getModel()),
             this.projectPortfolioRoot
-        );
+            );
+        return msg;
     },
     
     getFetchFields: function() {
@@ -486,19 +487,12 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     applyRuleToRecord: function(record) {
-        //var missingFields = [];
-
         console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
         } else {
-            var msg = Ext.String.format(
-                "<strong>{0} must be saved into *{1}*</strong> or a direct child project, not *{2}*.",
-                /[^\/]*$/.exec(this.getModel()),
-                this.projectPortfolioRoot,
-                record.get('Project').Name);
-            return msg;
+            return this.getDescription();
         }
     },
     
@@ -1236,10 +1230,9 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     },
     getDescription: function() {
         var msg = Ext.String.format(
-            "{0} must be saved into *{1}*, not *{2}*.",
+            "{0} must be saved into *{1}*.",
             /[^\/]*$/.exec(this.getModel()),
-            this.projectPortfolioRoot,
-            record.get('Project').Name
+            this.projectPortfolioRoot
             );
         return msg;
     },
@@ -1264,7 +1257,7 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     applyRuleToRecord: function(record) {
     
         if ( record.get('Project').Name != this.projectPortfolioRoot )  {
-            return this.getDescription;   
+            return this.getDescription();   
         } else {
             return null; // no rule violation
         }
