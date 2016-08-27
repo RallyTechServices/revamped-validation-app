@@ -24,10 +24,9 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     },
     getDescription: function() {
         var msg = Ext.String.format(
-            "{0} must be saved into *{1}*, not *{2}*.",
+            "{0} must be saved into *{1}*.",
             /[^\/]*$/.exec(this.getModel()),
-            this.projectPortfolioRoot,
-            record.get('Project').Name
+            this.projectPortfolioRoot
             );
         return msg;
     },
@@ -52,7 +51,7 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     applyRuleToRecord: function(record) {
     
         if ( record.get('Project').Name != this.projectPortfolioRoot )  {
-            return this.getDescription;   
+            return this.getDescription();   
         } else {
             return null; // no rule violation
         }

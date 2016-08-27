@@ -17,13 +17,14 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     getDescription: function() {
-
         console.log("InitiativeWrongProject:",this);
-
-        return Ext.String.format("<strong>{0}</strong>: Should be in *{1}* or a direct child project.",
-            this.getLabel(),
+        
+        var msg = Ext.String.format(
+            "{0} must be saved into *{1}* or a direct child project.",
+            /[^\/]*$/.exec(this.getModel()),
             this.projectPortfolioRoot
-        );
+            );
+        return msg;
     },
     
     getFetchFields: function() {
@@ -45,19 +46,12 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     applyRuleToRecord: function(record) {
-        //var missingFields = [];
-
         console.log("ApplyRuleToRecord:",record);        
 
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
         } else {
-            var msg = Ext.String.format(
-                "<strong>{0} must be saved into *{1}*</strong> or a direct child project, not *{2}*.",
-                /[^\/]*$/.exec(this.getModel()),
-                this.projectPortfolioRoot,
-                record.get('Project').Name);
-            return msg;
+            return this.getDescription();
         }
     },
     
