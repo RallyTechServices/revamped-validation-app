@@ -16,35 +16,43 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
         */
         portfolioItemTypes:[],
         //model: 'PortfolioItem/Theme',
-        label: Ext.String.format("Theme Project != 'Global Development'")
+        label: 'Theme Wrong Project'
     },
     
     getModel: function(){
         return this.portfolioItemTypes[2]; // 0-feature, 1-initiative
     },
     getDescription: function() {
-        return Ext.String.format("<strong>{0}</strong>: {1} should be in the *{2}* project.",
-            this.label,
-            this.getModel(),
-            this.projectPortfolioRoot
-        );
+        var msg = Ext.String.format(
+            "{0} must be saved into *{1}*, not *{2}*.",
+            /[^\/]*$/.exec(this.getModel()),
+            this.projectPortfolioRoot,
+            record.get('Project').Name
+            );
+        return msg;
     },
     
     getFetchFields: function() {
         return ['Name','Project'];
     },
     
+    getLabel: function(){
+        this.label = Ext.String.format(
+            "{0} Wrong Project",
+            /[^\/]*$/.exec(this.getModel())
+            );
+        return this.label;
+    },
+
     isValidField: function(model, field_name) {
         var field_defn = model.getField(field_name);
         return ( !Ext.isEmpty(field_defn) );
     },
     
     applyRuleToRecord: function(record) {
-        //var missingFields = [];
-
+    
         if ( record.get('Project').Name != this.projectPortfolioRoot )  {
-            var msg = Ext.String.format("{0} must be saved into *{1}*, not *{2}*.",this.getModel(),this.projectPortfolioRoot,record.get('Project').Name);
-            return msg;   
+            return this.getDescription;   
         } else {
             return null; // no rule violation
         }

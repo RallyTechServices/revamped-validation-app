@@ -1,5 +1,10 @@
 Ext.define('CA.techservices.validation.BaseRule',{
     extend: 'Ext.Base',
+    /*
+    * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+    * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+    */
+    portfolioItemTypes:[],
     /**
      * 
      * @cfg
@@ -26,7 +31,10 @@ Ext.define('CA.techservices.validation.BaseRule',{
     getFetchFields: function() {
         return [];
     },
-    
+    getLabel: function() {
+        console.error('getLabel is not implemented in subclass ', this.self.getName());
+        return this.label; 
+    },
     getModel: function() {
         return this.model;
     },

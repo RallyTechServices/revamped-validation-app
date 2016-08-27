@@ -3,7 +3,7 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     alias:  'widget.tsinitiativeprojectnotglobaldevelopmentrule',
     
     // Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
-    project_PortfolioRoot: "Global Development",
+    projectPortfolioRoot: null,
    
     config: {
         /*
@@ -13,24 +13,29 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
         portfolioItemTypes:[],
         //model: 'PortfolioItem/Initiative - types loaded in base class.',
         model: null,
-        //label: Ext.String.format("Theme Project != {0}.",this.project_PortfolioRoot)
-        label: Ext.String.format("Initiative Project != '{0}' or direct child project.") //,this.getSetting('rootPortfolioProject'))
+        label: 'Initiative Wrong Project'
     },
     
     getDescription: function() {
 
-        console.log("rule: getDescription",this.getSetting('rootPortfolioProject'));
+        console.log("InitiativeWrongProject:",this);
 
-        return Ext.String.format("<strong>{0}</strong>: {1}",
-            this.label,
-            "Initiatives must be in the ", this.project_PortfolioRoot," Project or a direct child project."
+        return Ext.String.format("<strong>{0}</strong>: Should be in *{1}* or a direct child project.",
+            this.getLabel(),
+            this.projectPortfolioRoot
         );
     },
     
     getFetchFields: function() {
         return ['Name','Project','Parent'];
     },
-    
+    getLabel: function(){
+        this.label = Ext.String.format(
+            "{0} Wrong Project",
+            /[^\/]*$/.exec(this.getModel())
+        );
+        return this.label;
+    },
     getModel: function(){
         return this.portfolioItemTypes[1]; // 0:Feature, 1:Initiative, 2:Theme, 3...
     },
@@ -47,7 +52,11 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
         if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
             return null; // no rule violation   
         } else {
-            var msg = Ext.String.format("Portfolio Initiatives must be saved into *{0}*</strong> or a direct child project, not *{1}*.",this.project_PortfolioRoot,record.get('Project').Name);
+            var msg = Ext.String.format(
+                "<strong>{0} must be saved into *{1}*</strong> or a direct child project, not *{2}*.",
+                /[^\/]*$/.exec(this.getModel()),
+                this.projectPortfolioRoot,
+                record.get('Project').Name);
             return msg;
         }
     },

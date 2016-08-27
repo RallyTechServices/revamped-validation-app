@@ -4,39 +4,51 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     
    
     config: {
+       /* 
+        * [{}] a Target root project for high-levelpassed in from calling routine. 
+        * Retrieves from appSettings 
+        * Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
+        */
+        projectPortfolioRoot: null,
         /*
         * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
         * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
         */
         portfolioItemTypes:[],
         //model: 'PortfolioItem/Theme',
-        label: 'Theme w/o Product Goal'
+        label: 'Theme needs Parent'
     },
     getModel: function(){
         return this.portfolioItemTypes[2];  // 0-feature, 1-initiative, etc...
     },
     getDescription: function() {
-        return Ext.String.format("<strong>{0}</strong>: {1}",
-            this.label,
-            "Themes without Product Goals."
-        );
+        var msg = Ext.String.format(
+                "{0} must be linked to a {1}.",
+                /[^\/]*$/.exec(this.getModel()),
+                this.portfolioItemTypes[3]
+                );
+        return msg;
     },
     
     getFetchFields: function() {
         return ['Name','Parent'];
     },
-    
+    getLabel: function(){
+        this.label = Ext.String.format(
+            "{0} needs {1}",
+            /[^\/]*$/.exec(this.getModel()),
+            /[^\/]*$/.exec(this.portfolioItemTypes[3])
+        );
+        return this.label;
+    },
     isValidField: function(model, field_name) {
         var field_defn = model.getField(field_name);
         return ( !Ext.isEmpty(field_defn) );
     },
     
     applyRuleToRecord: function(record) {
-        //var missingFields = [];
-
         if ( Ext.isEmpty(record.get('Parent') ) ) {
-            var msg = "Portfolio Themes must be linked to a Product Goal.";
-            return msg;   
+            return this.getDescription();   
         } else {
             return null; // no rule violation
         }
