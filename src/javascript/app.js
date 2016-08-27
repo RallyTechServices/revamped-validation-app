@@ -3,7 +3,6 @@ Ext.define("TSValidationApp", {
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
-    _loaded: false,
     items: [
         { //filter box
             xtype:'container',
@@ -25,54 +24,36 @@ Ext.define("TSValidationApp", {
     },
     config: {
         defaultSettings: {
-            showPortfolioItemRules: true,
-            showStoryRules: true,
-            showDefectRules: false,
-            showTaskRules: false
+            rootPortfolioProject: 'Global Development',
+            showSchedulable: false            
         }
     },
     getSettingsFields: function() {
-        return [
-        { 
-            name: 'showPortfolioItemRules',
+         return [
+         {  
+            name: 'rootPortfolioProject',
+            xtype: 'rallytextfield',
+            fieldLabel: 'Name of root Portfolio Item project:'
+         },
+         { 
+            name: 'showSchedulable',
             xtype: 'rallycheckboxfield',
             boxLabelAlign: 'after',
             fieldLabel: '',
             margin: '0 0 25 200',
-            boxLabel: 'Show Portfolio Item Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Portfolio Items.</i></span>'
-        },
-        { 
-            name: 'showStoryRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Story Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Stories.</i></span>'
-        },
-        { 
-            name: 'showDefectRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Defect Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Defects.</i></span>'
-        },
-        { 
-            name: 'showTaskRules',
-            xtype: 'rallycheckboxfield',
-            boxLabelAlign: 'after',
-            fieldLabel: '',
-            margin: '0 0 25 200',
-            boxLabel: 'Show Task Rules<br/><span style="color:#999999;"><i>Tick to apply rules for Tasks.</i></span>'
-        }
-        ];
+            boxLabel: 'Show only schedulable artifacts: Features, User Stories, Defects and Tasks.'
+         }
+         ];
     },
     rulesByType: {
-        PortfolioItem: [           
+        PortfolioItemTimeboxNo: [ // Initiatives and higher          
             {xtype:'tsthemenoproductgoalrule'},
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
+        ],
+        PortfolioItemTimeboxYes: [ // Features into Releases
+
         ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
@@ -80,8 +61,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
-            {xtype:'tsstoryunfinishedacceptedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
@@ -94,35 +75,11 @@ Ext.define("TSValidationApp", {
         ]
     },                    
     launch: function() {
-        this._doLayout();
-
-        this.validator = this._instantiateValidator();
-        
-        this.validator.getPrecheckResults().then({
-            scope: this,
-            success: function(issues) {
-                
-                var messages = Ext.Array.filter(issues, function(issue){
-                    return !Ext.isEmpty(issue);
-                });
-                
-                if ( messages.length > 0 ) {
-                    var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
-                    Ext.Array.each(messages, function(message){
-                        append_text += '<li>' + message + '</li>';
-                    });
-                    append_text += "</ul>";
-                    
-                    this.logger.log(append_text);
-                }
-                
-                this._updateData();
-            },
-            failure: function(msg) {
-                Ext.Msg.alert('Problem with precheck', msg);
-            }
-        });
-        
+        this._fetchPortfolioItemTypes().then({
+            success: this._initializeApp, 
+            failure: this._showErrorMsg,
+            scope: this
+        });        
     },
 
       showDrillDown: function(records, title) {
@@ -180,16 +137,76 @@ Ext.define("TSValidationApp", {
             }]
         }).show();
     },
+    _initializeApp: function(portfolioItemTypes){
+        var me = this;
+        
+        me.logger.log('InitializeApp',portfolioItemTypes);
 
-_doLayout: function(){
-    var me = this;
-    this.down('#filters_box').add([
+        // add the array of portfolioItem Type names to each portfolio rule as we instantiate it
+        // also grab appSetting for a target folder to hold high-level portfolio items
+        Ext.Array.each(me.rulesByType.PortfolioItemTimeboxNo, function(rule){
+            rule.portfolioItemTypes = portfolioItemTypes;
+            rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
+        });
+        Ext.Array.each(me.rulesByType.PortfolioItemTimeboxYes, function(rule){
+            rule.portfolioItemTypes = portfolioItemTypes;
+            rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
+        });
+        
+        // add the array to the app as well.
+        me.portfolioItemTypes = portfolioItemTypes;
+
+        console.log("_initializeApp after assign:",me.rulesByType);
+        
+        me._doLayout();
+        me._loadData();
+    },
+    _showErrorMsg: function(msg){
+        Rally.ui.notify.Notifier.showError({message:msg});
+    },
+    _fetchPortfolioItemTypes: function(){
+        var deferred = Ext.create('Deft.Deferred');
+        Ext.create('Rally.data.wsapi.Store',{
+            model: 'typedefinition',
+            fetch:['TypePath','Ordinal'],
+            filters: [{property:'TypePath',operator:'contains',value:'PortfolioItem/'}],
+            sorters: [{property:'Ordinal',direction:'ASC'}]
+        }).load({
+            callback: function(records,operation){
+                if (operation.wasSuccessful()){
+                    var portfolioItemArray = [];
+                    Ext.Array.each(records,function(rec){
+                        portfolioItemArray.push(rec.get('TypePath'));
+                    });
+                    deferred.resolve(portfolioItemArray);
+                } else {
+                    var message = 'failed to load Portfolio Item Types ' + (operation.error && operation.error.errors.join(','));
+                    deferred.reject(message);
+                }
+            }
+        })
+        
+        return deferred;
+    },
+
+    _doLayout: function(){
+        var me = this;
+        // add checkbox panel to select rules
+        this.down('#filters_box').add([
             {
                 xtype: 'panel',
                 title: 'Select Rules',
-                layout:{type: 'hbox',align: 'left'},
+                itemId: 'selectRulesPanel',
+                layout:{
+                    type: 'hbox',
+                    align: 'left'
+                },
                 height: 80,
-                items:[
+            },
+        ]);
+        if (!this.getSetting('showSchedulable')){
+            // only show high-level portfolio rules
+            this.down('#selectRulesPanel').add([
                 {
                     xtype: 'rallycheckboxfield',
                     columnWidth: '25%',
@@ -199,8 +216,16 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'portfolioRules',
                     itemId: 'portfolioRuleCheckBox',
+                    stateful: true,
+                    stateId: 'portfolioRuleCheckBox',
+                    //disabled: true,
+                    readOnly: true, // a little nicer display than disabled.
                     value: true
                 },
+            ]);
+        } else {
+            // show Stories/Defects/Tasks (no Feature Rules so far)
+            this.down('#selectRulesPanel').add([
                 {
                     xtype: 'rallycheckboxfield',
                     columnWidth: '25%',
@@ -209,6 +234,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'storyRules',
                     itemId: 'storyRuleCheckBox',
+                    stateful: true,
+                    stateId: 'userStoryRuleCheckBox',
                     value: true
                 },
                 {
@@ -219,6 +246,8 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'defectRules',
                     itemId: 'defectRuleCheckBox',
+                    stateful: true,
+                    stateId: 'defectRuleCheckBox',
                     value: true
                 },    
                 {
@@ -229,75 +258,100 @@ _doLayout: function(){
                     boxLabelAlign: 'after',
                     name: 'taskRules',
                     itemId: 'taskRuleCheckBox',
+                    stateful: true,
+                    stateId: 'taskRuleCheckBox',
                     value: true
-                }    
-                ]
-            },
-            {
-                xtype: 'panel',
-                //title: 'Spacer',
-                width: 40,
-                height: 80,
-                border: 0
-            },
-            {
-                xtype: 'panel',
-                title: 'Select Timeboxes',
-                itemId: 'selectTimeboxes',
-                height: 80,                
-                layout:{type:'hbox',align:'right'},
-                items:[{
-                    xtype: 'rallyiterationcombobox',
-                    itemId: 'iterationSelector',
-                    allowNoEntry: true,
-                    margin: 10,        
-                    fieldLabel: 'Iteration',
-                    labelAlign: 'right',
-                    width: 340
-                    },
-                    {   
-                    xtype: 'rallyreleasecombobox',
-                    itemId: 'releaseSelector',
-                    allowNoEntry: true, 
-                    margin: 10,
-                    fieldLabel: 'Release',
-                    labelAlign: 'right',
-                    width: 340
-                    }], 
-              }, // end of the TimeBox Selectors
-              {
-                xtype: 'panel',
-                //title: 'Apply Selections',
-                //width: 40,
-                height: 80,
-                border: 2,
-                layout:{type:'hbox',align: 'right',margin: 10},
-                items:[
-                    {
-                        xtype: 'rallybutton',
-                        scope: me,
-                        text: 'Apply Selections',
-                        handler: function() {
-                            //Ext.Msg.alert('Button', 'You clicked me');
-                            // console.log("In the button:",
-                            //     this,
-                            //     this.down('#portfolioRuleCheckBox'),
-                            //     this.down('#portfolioRuleCheckBox').value,
-                            //     this.down('#storyRuleCheckBox').value,
-                            //     this.down('#defectRuleCheckBox').value,
-                            //     this.down('#taskRuleCheckBox').value,
-                            //     this.down('#releaseSelector').value,
-                            //     this.down('#iterationSelector').value
-                            //     );
-                            this._instantiateValidator();
+                }
+            ]);
+            // add the spacer panel after the rule-selector panel
+            this.down('#filters_box').add([
+                {
+                    xtype: 'panel',
+                    //title: 'Spacer',
+                    width: 40,
+                    height: 80,
+                    border: 0
+                },
+                {
+                    xtype: 'panel',
+                    title: 'Select Timeboxes',
+                    itemId: 'selectTimeboxes',
+                    height: 80,                
+                    layout:{type:'hbox',align:'right'},
+                    items:[{
+                        xtype: 'rallyiterationcombobox',
+                        itemId: 'iterationSelector',
+                        allowNoEntry: true,
+                        margin: 10,        
+                        fieldLabel: 'Iteration',
+                        labelAlign: 'right',
+                        width: 340
+                        },
+                        {   
+                        xtype: 'rallyreleasecombobox',
+                        itemId: 'releaseSelector',
+                        allowNoEntry: true, 
+                        margin: 10,
+                        fieldLabel: 'Release',
+                        labelAlign: 'right',
+                        width: 340
+                        }] 
+                }, // end of the TimeBox Selectors
+                {
+                    xtype: 'panel',
+                    height: 80,
+                    border: 0,
+                    layout:{type:'hbox',align: 'right',margin: 10},
+                    items:[
+                        {
+                            xtype: 'rallybutton',
+                            scope: me,
+                            margin: '40 0 0 10', //top right bottom left
+                            text: 'Apply Selections',
+                            handler: function() {
+                                //Ext.Msg.alert('Button', 'You clicked me');
+                                console.log("In the button:",
+                                    this.getSetting('showSchedulable'),
+                                    this.getSetting('rootPortfolioProject')
+                                );
+                                me._loadData();    
+                            }
                         }
-                    }
-                ]
+                    ]
+                }
+            ]);
+        }
+    },
+    _loadData: function(){
+        this.validator = this._instantiateValidator();
+        
+        this.validator.getPrecheckResults().then({
+            scope: this,
+            success: function(issues) {
+                
+                var messages = Ext.Array.filter(issues, function(issue){
+                    return !Ext.isEmpty(issue);
+                });
+                
+                if ( messages.length > 0 ) {
+                    var append_text = "<br/><b>Precheck Issues:</b><br/><ul>";
+                    Ext.Array.each(messages, function(message){
+                        append_text += '<li>' + message + '</li>';
+                    });
+                    append_text += "</ul>";
+                    
+                    this.logger.log(append_text);
+                }
+                
+                this._updateData();
             },
-        ]); // end of items in filter-box)
-        me._loaded = true;
-},
-_updateData: function() {
+            failure: function(msg) {
+                Ext.Msg.alert('Problem with precheck', msg);
+            }
+        });
+    },
+
+    _updateData: function() {
         var me = this;
         this.setLoading("Loading data...");
         
@@ -320,90 +374,80 @@ _updateData: function() {
                 }
                 
                 this.display_rows = Ext.Object.getValues( this.validator.recordsByModel );
-                
-                this._makeChart(results);
+
+                this._makeChart(results);  
             },
             failure: function(msg) {
                 Ext.Msg.alert('Problem loading data', msg);
             }
-        }).always(function() { me.setLoading(false); });
-        
+        }).always(function() { me.setLoading(false); });    
     }, 
     
     _instantiateValidator: function() {
         var me = this;
 
         var rules = [];
-        console.log('_instantiateValidator');
-
-        if (me._loaded) {
         
-        console.log('_instantiateValidatorLoaded');
-            
-            if ( me.down('#portfolioRuleCheckBox').value) {
-                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-            }
+        me.logger.log('_instantiateValidator',me);
+
+        // ************************
+        // Initiatives and Higher are not schedule-able.
+        if ( me.getSetting('showSchedulable')) {
+            // ** we don't have any Feature Rules ***
+            //if ( me.down('#portfolioRuleCheckBox').value) {
+            //    rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxYes']);
+            //}    
             if ( me.down('#storyRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
+                rules = Ext.Array.push(rules, me.rulesByType['HierarchicalRequirement']);
             }
             if ( me.down('#defectRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
+                rules = Ext.Array.push(rules, me.rulesByType['Defect']);
             }
             if ( me.down('#taskRuleCheckBox').value ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Task']);
+                rules = Ext.Array.push(rules, me.rulesByType['Task']);
+            }       
+        } else { // only show high level Portfolio Item rules
+            if ( me.down('#portfolioRuleCheckBox').value) {
+                rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxNo']);
             }
-        } else {
-            console.log('_instantiateValidatorFirstTime');
-        
-            if ( this.getSetting('showPortfolioItemRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['PortfolioItem']);
-            }
-            if ( this.getSetting('showStoryRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['HierarchicalRequirement']);
-            }
-            if ( this.getSetting('showDefectRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Defect']);
-            }
-            if ( this.getSetting('showTaskRules') ) {
-                rules = Ext.Array.push(rules, this.rulesByType['Task']);
-            }
-        }
-        
+        } // end of rulesByType filtering
+
         var validator = Ext.create('CA.techservices.validator.Validator',{
             rules: rules,
             fetchFields: ['FormattedID','ObjectID'],
-//            baseFilters:{ 
-//                 HierarchicalRequirement: {},
-//                 Task: {}
-//             },
+// **           baseFilters:{ 
+// **                HierarchicalRequirement: {},
+// **                Task: {}
+// **            },
             pointEvents: {
                 click: function() {
                    me.showDrillDown(this._records,this._name);
                 }
             }
         });
-        
-        return validator;
+        return validator;        
     },
+
     _makeChart: function(data) {
         var me = this;
         
         this.logger.log('_makeChart', data);
       //  var colors = CA.apps.charts.Colors.getConsistentBarColors();
         
+        // destroy any existing version of the chart before creating a new one
+        this.down('#display_box').removeAll();
+
+        // now go ahead and create the new chart.
         this.down("#display_box").add({
             chartData: data,
             xtype:'rallychart',
+            itemId: 'validationChart',
             loadMask: false,
             chartConfig: this._getChartConfig()  //,
         //    chartColors: colors
         });
     },
-    // _refreshChart: function(){
-    //     var me = this;
-    //     me.logger.log('_refreshChart');
-    //     // need an itemId for the chart...
-    // },
+
     _getChartConfig: function() {
         var me = this;
         
@@ -449,6 +493,7 @@ _updateData: function() {
             }
         }
     },
+    
     _loadAStoreWithAPromise: function(model_name, model_fields){
         var deferred = Ext.create('Deft.Deferred');
         var me = this;
