@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Sat Aug 27 2016 06:40:25 GMT-0400 (EDT) -->
+    <!--  Build Date: Sun Aug 28 2016 20:29:35 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sat Aug 27 2016 06:40:25 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Sun Aug 28 2016 20:29:35 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 102477037940;
+        var CHECKSUM = 117927623346;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -1590,6 +1590,9 @@ Ext.define("TSValidationApp", {
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
     defaults: { margin: 10 },
+    
+    MAX_LIMITS:{CATEGORIES: 30},
+
     items: [
         { //filter box
             xtype:'container',
@@ -1609,12 +1612,6 @@ Ext.define("TSValidationApp", {
     integrationHeaders : {
         name : "TSValidationApp"
     },
-    config: {
-        defaultSettings: {
-            rootPortfolioProject: 'Global Development',
-            showSchedulable: false            
-        }
-    },
     getSettingsFields: function() {
          return [
          {  
@@ -1628,9 +1625,15 @@ Ext.define("TSValidationApp", {
             boxLabelAlign: 'after',
             fieldLabel: '',
             margin: '0 0 25 200',
-            boxLabel: 'Show only schedulable artifacts: Features, User Stories, Defects and Tasks.'
+            boxLabel: 'Show only schedulable artifacts: User Stories, Defects and Tasks.'
          }
          ];
+    },
+    config: {
+        defaultSettings: {
+            rootPortfolioProject: 'Global Development',
+            showSchedulable: false            
+        }
     },
     rulesByType: {
         PortfolioItemTimeboxNo: [ // Initiatives and higher          
@@ -1639,9 +1642,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
-        PortfolioItemTimeboxYes: [ // Features into Releases
-
-        ],
+        // PortfolioItemTimeboxYes: [ // Features into Releases
+        // ],
         HierarchicalRequirement: [
             {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
             {xtype:'tsstorynofeatureexcludeunfinishedrule' },
@@ -1657,11 +1659,17 @@ Ext.define("TSValidationApp", {
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
-            {xtype:'tstasktodonoestimaterule'},
+            {xtype:'tstasktodonoestimaterule'}
           //  {xtype:'tstaskactivenotodorule'}
         ]
     },                    
     launch: function() {
+        this.logger.log("launch:", this);
+        //setup the page
+        this._doLayout();
+
+        // get any data model customizations ... then get the data and render the chart
+        
         this._fetchPortfolioItemTypes().then({
             success: this._initializeApp, 
             failure: this._showErrorMsg,
@@ -1732,11 +1740,15 @@ Ext.define("TSValidationApp", {
         // add the array of portfolioItem Type names to each portfolio rule as we instantiate it
         // also grab appSetting for a target folder to hold high-level portfolio items
         Ext.Array.each(me.rulesByType.PortfolioItemTimeboxNo, function(rule){
+            // get the collection of workspace specific portfolio item names per level
             rule.portfolioItemTypes = portfolioItemTypes;
+            // for rules that need to have a specific project folder for portfolio items
             rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
         });
         Ext.Array.each(me.rulesByType.PortfolioItemTimeboxYes, function(rule){
+            // get the collection of workspace specific portfolio item names per level
             rule.portfolioItemTypes = portfolioItemTypes;
+            // for rules that need to have a specific project folder for portfolio items
             rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
         });
         
@@ -1745,7 +1757,6 @@ Ext.define("TSValidationApp", {
 
         console.log("_initializeApp after assign:",me.rulesByType);
         
-        me._doLayout();
         me._loadData();
     },
     _showErrorMsg: function(msg){
@@ -1861,7 +1872,7 @@ Ext.define("TSValidationApp", {
                 {
                     xtype: 'panel',
                     //title: 'Spacer',
-                    width: 40,
+                    width: 10,
                     height: 80,
                     border: 0
                 },
@@ -1871,32 +1882,40 @@ Ext.define("TSValidationApp", {
                     itemId: 'selectTimeboxes',
                     height: 80,                
                     layout:{type:'hbox',align:'right'},
-                    items:[{
+                    items:[
+                        {
                         xtype: 'rallyiterationcombobox',
                         itemId: 'iterationSelector',
                         allowNoEntry: true,
-                        defaultToCurrentTimebox: true,  // client use-case: clean-up for sprint
+                        defaultToCurrentTimebox: true,  // client use-case: easier clean-up for sprint
+                        autoSelectCurrentItem: true,    // should have defaulted
                         //defaultSelectionPosition: 'first',
+                        stateful: true,
+                        stateId: 'iterationSelectorState',
                         margin: 10,        
                         fieldLabel: 'Iteration',
                         labelAlign: 'right',
-                        width: 340
+                        width: 340,
                         },
                         {   
                         xtype: 'rallyreleasecombobox',
                         itemId: 'releaseSelector',
                         defaultToCurrentTimebox: true,
+                        autoSelectCurrentItem: true,    // should have defaulted
                         //defaultSelectionPosition: 'first',
+                        stateful: true,
+                        stateId: 'releaseSelectorState',
                         allowNoEntry: true, 
                         margin: 10,
                         fieldLabel: 'Release',
                         labelAlign: 'right',
-                        width: 340
+                        width: 340,                        
                         }] 
                 }, // end of the TimeBox Selectors
                 {
                     xtype: 'panel',
                     height: 80,
+                    width: '30%',
                     border: 0,
                     layout:{type:'hbox',align: 'right',margin: 10},
                     items:[
@@ -1919,6 +1938,7 @@ Ext.define("TSValidationApp", {
             ]);
         }
     },
+    
     _loadData: function(){
         this.validator = this._instantiateValidator();
         
@@ -1966,7 +1986,9 @@ Ext.define("TSValidationApp", {
             success: function(results) {
                 
                 if ( results.categories && results.categories.length === 0 ) {
-                    Ext.Msg.alert('','No violations found');
+                    // if no results - erase the underlying, previously rendered chart
+                    this.down('#display_box').removeAll();
+                    Ext.Msg.alert('','No violations found with current selections.');
                     return;
                 }
                 
@@ -1985,15 +2007,19 @@ Ext.define("TSValidationApp", {
 
         var rules = [];
         
-        me.logger.log('_instantiateValidator',me);
+        me.logger.log('_instantiateValidator');
 
         // ************************
         // Initiatives and Higher are not schedule-able.
         if ( me.getSetting('showSchedulable')) {
-            // ** we don't have any Feature Rules ***
-            //if ( me.down('#portfolioRuleCheckBox').value) {
-            //    rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxYes']);
-            //}    
+            me.logger.log("_instantiateValidator:Timebox: ", me, me.down('#iterationSelector').value,me.down('#releaseSelector').value);
+
+            //this.getSetting('showSchedulable')
+                // ** we don't have any Feature Rules so far ***
+                //if ( me.down('#portfolioRuleCheckBox').value) {
+                //    rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxYes']);
+                //}    
+            
             if ( me.down('#storyRuleCheckBox').value ) {
                 rules = Ext.Array.push(rules, me.rulesByType['HierarchicalRequirement']);
             }
@@ -2009,45 +2035,99 @@ Ext.define("TSValidationApp", {
             }
         } // end of rulesByType filtering
 
-        var validator = Ext.create('CA.techservices.validator.Validator',{
-            rules: rules,
-            fetchFields: ['FormattedID','ObjectID'],
-// **           baseFilters:{ 
-// **                HierarchicalRequirement: {},
-// **                Task: {}
-// **            },
-            pointEvents: {
-                click: function() {
-                   me.showDrillDown(this._records,this._name);
+        // create two different versions ... one for Timebox filtered, one without
+        var validator = {};
+        
+        if (this.getSetting('showSchedulable')){
+            // setup base timebox filters
+            var story_base_timebox_filter = Rally.data.wsapi.Filter.and([
+                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+                ]);
+            var defect_base_timebox_filter = Rally.data.wsapi.Filter.and([
+                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+                ]);    
+            var task_base_timebox_filter = Rally.data.wsapi.Filter.and([
+                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+                ]); 
+
+            // create the validator object 
+            validator = Ext.create('CA.techservices.validator.Validator',{
+                rules: rules,
+                fetchFields: ['FormattedID','ObjectID'],
+                // get any settings from the timebox selectors
+                baseFilters:{ 
+                    HierarchicalRequirement: story_base_timebox_filter,
+                    Defect: defect_base_timebox_filter,
+                    Task: task_base_timebox_filter
+                },
+                pointEvents: {
+                    click: function() {
+                    me.showDrillDown(this._records,this._name);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            validator = Ext.create('CA.techservices.validator.Validator',{
+                rules: rules,
+                fetchFields: ['FormattedID','ObjectID'],
+                // get any settings from the timebox selectors
+                // baseFilters:{ 
+                //     PortfolioItemTimeboxNo:{},
+                //     PortfolioItemTimeboxYes:{},
+                //      HierarchicalRequirement: {},
+                //     Defect: {},
+                //     Task: {}
+                // },
+                pointEvents: {
+                    click: function() {
+                    me.showDrillDown(this._records,this._name);
+                    }
+                }
+            });
+        }
+
         return validator;        
     },
 
     _makeChart: function(data) {
-        var me = this;
-        
+        // data is the collection of series and categories (projects)
         this.logger.log('_makeChart', data);
-      //  var colors = CA.apps.charts.Colors.getConsistentBarColors();
+
+        //  var colors = CA.apps.charts.Colors.getConsistentBarColors();
         
         // destroy any existing version of the chart before creating a new one
         this.down('#display_box').removeAll();
 
-        // now go ahead and create the new chart.
-        this.down("#display_box").add({
-            chartData: data,
-            xtype:'rallychart',
-            itemId: 'validationChart',
-            loadMask: false,
-            chartConfig: this._getChartConfig()  //,
-        //    chartColors: colors
-        });
+        this.logger.log('_makeChart Project Count Test: ',this.MAX_LIMITS.CATEGORIES,data.categories.length);
+
+        if (data.categories.length > this.MAX_LIMITS.CATEGORIES){
+            // if there are too many projects in scope (i.e. categories) the chart is unreadable.
+            var msg = Ext.String.format ("You've selected a project too high in the project hierarchy. With {0} ",data.categories.length);
+            msg += "[child] projects in scope, the chart will be unusable. Please select a project ";
+            msg += "further down the project hierarchy.";
+
+            Ext.Msg.alert('Too Many Projects In Selection',msg);
+            return;
+        } else {
+            // Go ahead and create the new chart.
+            this.down("#display_box").add({
+                chartData: data,
+                xtype:'rallychart',
+                itemId: 'validationChart',
+                loadMask: false,
+                chartConfig: this._getChartConfig(data)  //,
+                //    chartColors: colors
+            });
+        }
     },
 
-    _getChartConfig: function() {
-        var me = this;
-        
+    _getChartConfig: function(data) {
+
+        this.logger.log("_getChartConfig: ",data.series,data.categories,data.categories.length);
+        this.logger.log("_getChartConfig2: ",this,this.down('#portfolioRuleCheckBox'));
         var title_prefix = "";
         if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
@@ -2061,12 +2141,17 @@ Ext.define("TSValidationApp", {
             }
             title_prefix += "Story";
         }
+        // if the last item, use 'and' as separator, else use a comma
         if ( this.down('#defectRuleCheckBox') ) {
-            if (title_prefix.length > 0){
+            if ((title_prefix.length > 0) && ( this.down('#taskRuleCheckBox')))  {
                 title_prefix += ", ";
+            } else {
+                title_prefix += ' and ';
             }
             title_prefix += "Defect";
-        }
+        }            
+           
+        // should be last item
         if ( this.down('#taskRuleCheckBox') ) {
             if (title_prefix.length > 0){
                 title_prefix += " and ";
@@ -2077,8 +2162,7 @@ Ext.define("TSValidationApp", {
         return {
             chart: { type:'column' },
             title: { text: title_prefix + ' Validation Results' },
-            //xAxis: {labels:{rotation:60}},
-            xAxis: {},
+            xAxis: this._rotateProjectLabels(data.categories.length),
             yAxis: { 
                 min: 0,
                 title: { text: 'Count' }
@@ -2134,7 +2218,18 @@ Ext.define("TSValidationApp", {
         if ( this.about_dialog ) { this.about_dialog.destroy(); }
         this.about_dialog = Ext.create('Rally.technicalservices.InfoLink',{});
     },
-    
+    _rotateProjectLabels: function(project_count){
+        this.logger.log("_rotateProjectLabels: ",project_count);
+        // horizontal labels for up to 5 items
+        if (project_count <= 10) {
+            return {labels:{rotation:0}};
+        } else if (project_count <= 20){
+            return {labels:{rotation:45}};
+        } else { // full vertical rotation for more than 10 items (good for up-to about 20)
+            return {labels:{rotation:90}};
+        }
+    },
+
     isExternal: function(){
         return typeof(this.getAppId()) == 'undefined';
     }
