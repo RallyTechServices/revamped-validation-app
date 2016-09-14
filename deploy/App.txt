@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Sun Aug 28 2016 20:29:35 GMT-0400 (EDT) -->
+    <!--  Build Date: Tue Sep 13 2016 20:31:56 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Sun Aug 28 2016 20:29:35 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Tue Sep 13 2016 20:31:56 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 117927623346;
+        var CHECKSUM = 130319577040;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -376,6 +376,80 @@ Ext.define('CA.techservices.validation.DefectClosedNoResolution',{
         ]);
     }
 });
+Ext.define('CA.techservices.validation.DefectReleaseNotEqDefectSuiteReleaseRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsdefectreleasenoteqdefectsuitereleaserule',
+     
+    config: {
+        model: 'Defect',
+        label: 'Defect Release Not Equal DS Release'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Defect Release Should be the same as Defect Suite Release (if the DS has a Release)."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Name','DefectSuites','Release'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+
+        // ~~~~~~~~~~ DOES NOT WORK.... ~~~~~~~
+console.log("applyRuleToRecord:", record);
+var defectSuites = record.get('DefectSuites');
+console.log('applyRuleToRecord:DS-', defectSuites);
+if (defectSuites != null){
+    console.log('applyRuleToRecord:DS-', defectSuites[0]);
+}
+return null;
+// ~~~~~~~~~~~~~~~~~~~
+// following does not work ... but SHOULD!!!
+        // the statement below - short-circuits if the defect does not have a release or the defect suite does not have a release.
+        // we have another test that requires that a Defect be linked to at most one defectSuite. A defectSuite may have multiple defects.
+        // return null if the test is not directly violated...
+        if (((record.get('Release') && record.get('DefectSuites').ObjectID)  // defect is scheduled and there IS a defectsuite (ds)
+        && (record.get('DefectSuites')[0].Release))                             // and the ds has been scheduled
+        && ((record.get('Release').Name) == (record.get('DefectSuites')[0].Release.Name))) // check for equivalence in the names
+        {
+            return null; // no rule violation
+        } else {
+            var de_release = "No Release";
+            if (record.get('Release') != null) {
+                de_release = record.get('Release').Name;
+            }
+            var ds_msg = "No Release";
+            if (record.get('DefectSuites')[0].ObjectID && (record.get('DefectSuites')[0].Release != null)) {
+                ds_msg = record.get('DefectSuites')[0].Release.Name;
+            } else {
+                ds_msg = "No Feature at all!";
+            }
+        
+            return Ext.String.format("Defect.Release({0}) != DefectSuite.Release ({1})!",de_release,ds_msg);
+        }        
+    },
+    
+    getFilters: function() {        
+        var today = Rally.util.DateTime.toIsoString(new Date());
+        return Ext.create('Rally.data.wsapi.Filter',{
+            property:'DefectSuites.ObjectID',
+            operator: '!=',
+            value: null
+        });
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Feature',operator:'!=',value:null},
+        //     {property:'Name',operator: '!contains', value: "[Unfinished]" }
+        // ]);
+    }
+});
 Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsinitiativenothemerule',
@@ -434,9 +508,10 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Parent',operator:'=',value:null}
+        // ]);
+        return [];
     }
 });
 Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule',{
@@ -501,6 +576,7 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
        // return Rally.data.wsapi.Filter.and([
        //     {property:'Parent',operator:'=',value:null}
        // ]);
+       return [];
     }
 });
 Ext.define('CA.techservices.validation.StoryCompletedNoActuals',{
@@ -1199,9 +1275,10 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Parent',operator:'=',value:null}
+        // ]);
+        return [];
     }
 });
 Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
@@ -1265,9 +1342,12 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+        // getting null error on parent
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Parent',operator:'=',value:null}
+        //]);
+        return [];
+       
     }
 });
 Ext.define('CA.techservices.validator.Validator',{
@@ -1310,7 +1390,7 @@ Ext.define('CA.techservices.validator.Validator',{
     constructor: function(config) {
         Ext.apply(this,config);
 
-//console.log("validator-constructor",this,config,config.rules.length);        
+        //console.log("validator-constructor",this,config,config.rules.length);        
         
         var rules = [];
         
@@ -1318,7 +1398,7 @@ Ext.define('CA.techservices.validator.Validator',{
             Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
 
-//console.log('validator-constructor-before delete: ', name,rule);
+            //console.log('validator-constructor-before delete: ', name,rule);
 
             if ( !Ext.isEmpty(name) ) {
                 var new_rule = Ext.clone(rule);
@@ -1655,7 +1735,8 @@ Ext.define("TSValidationApp", {
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
-            {xtype:'tsdefectacceptednotclosedrule'}
+            {xtype:'tsdefectacceptednotclosedrule'},
+            //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
@@ -1819,6 +1900,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'portfolioRuleCheckBox',
                     stateful: true,
                     stateId: 'portfolioRuleCheckBox',
+                    stateEvents: ['change'],
                     //disabled: true,
                     readOnly: true, // a little nicer display than disabled.
                     value: true
@@ -1827,6 +1909,7 @@ Ext.define("TSValidationApp", {
         } else {
             // update the selectRulesPanel title ('Select Rules')
             this.down('#selectRulesPanel').setTitle('Select Rules to Display');
+
 
             // show Stories/Defects/Tasks (no Feature Rules so far)
             this.down('#selectRulesPanel').add([
@@ -1840,6 +1923,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'storyRuleCheckBox',
                     stateful: true,
                     stateId: 'userStoryRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 },
                 {
@@ -1852,6 +1936,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'defectRuleCheckBox',
                     stateful: true,
                     stateId: 'defectRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 },    
                 {
@@ -1864,6 +1949,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'taskRuleCheckBox',
                     stateful: true,
                     stateId: 'taskRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 }
             ]);
@@ -1892,10 +1978,11 @@ Ext.define("TSValidationApp", {
                         //defaultSelectionPosition: 'first',
                         stateful: true,
                         stateId: 'iterationSelectorState',
+                        stateEvents: ['change','select','setvalue'],
                         margin: 10,        
                         fieldLabel: 'Iteration',
                         labelAlign: 'right',
-                        width: 340,
+                        width: 340
                         },
                         {   
                         xtype: 'rallyreleasecombobox',
@@ -1905,6 +1992,7 @@ Ext.define("TSValidationApp", {
                         //defaultSelectionPosition: 'first',
                         stateful: true,
                         stateId: 'releaseSelectorState',
+                        stateEvents: ['change','select','setvalue'],
                         allowNoEntry: true, 
                         margin: 10,
                         fieldLabel: 'Release',

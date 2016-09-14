@@ -59,8 +59,11 @@ Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+        // getting null error on parent
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Parent',operator:'=',value:null}
+        //]);
+        return [];
+       
     }
 });

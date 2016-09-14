@@ -68,7 +68,8 @@ Ext.define("TSValidationApp", {
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
-            {xtype:'tsdefectacceptednotclosedrule'}
+            {xtype:'tsdefectacceptednotclosedrule'},
+            //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
             {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
@@ -232,6 +233,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'portfolioRuleCheckBox',
                     stateful: true,
                     stateId: 'portfolioRuleCheckBox',
+                    stateEvents: ['change'],
                     //disabled: true,
                     readOnly: true, // a little nicer display than disabled.
                     value: true
@@ -240,6 +242,7 @@ Ext.define("TSValidationApp", {
         } else {
             // update the selectRulesPanel title ('Select Rules')
             this.down('#selectRulesPanel').setTitle('Select Rules to Display');
+
 
             // show Stories/Defects/Tasks (no Feature Rules so far)
             this.down('#selectRulesPanel').add([
@@ -253,6 +256,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'storyRuleCheckBox',
                     stateful: true,
                     stateId: 'userStoryRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 },
                 {
@@ -265,6 +269,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'defectRuleCheckBox',
                     stateful: true,
                     stateId: 'defectRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 },    
                 {
@@ -277,6 +282,7 @@ Ext.define("TSValidationApp", {
                     itemId: 'taskRuleCheckBox',
                     stateful: true,
                     stateId: 'taskRuleCheckBox',
+                    stateEvents: ['change'],
                     value: true
                 }
             ]);
@@ -305,10 +311,11 @@ Ext.define("TSValidationApp", {
                         //defaultSelectionPosition: 'first',
                         stateful: true,
                         stateId: 'iterationSelectorState',
+                        stateEvents: ['change','select','setvalue'],
                         margin: 10,        
                         fieldLabel: 'Iteration',
                         labelAlign: 'right',
-                        width: 340,
+                        width: 340
                         },
                         {   
                         xtype: 'rallyreleasecombobox',
@@ -318,6 +325,7 @@ Ext.define("TSValidationApp", {
                         //defaultSelectionPosition: 'first',
                         stateful: true,
                         stateId: 'releaseSelectorState',
+                        stateEvents: ['change','select','setvalue'],
                         allowNoEntry: true, 
                         margin: 10,
                         fieldLabel: 'Release',
