@@ -60,5 +60,6 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
        // return Rally.data.wsapi.Filter.and([
        //     {property:'Parent',operator:'=',value:null}
        // ]);
+       return [];
     }
 });

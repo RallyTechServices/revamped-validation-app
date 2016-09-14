@@ -38,7 +38,7 @@ Ext.define('CA.techservices.validator.Validator',{
     constructor: function(config) {
         Ext.apply(this,config);
 
-//console.log("validator-constructor",this,config,config.rules.length);        
+        //console.log("validator-constructor",this,config,config.rules.length);        
         
         var rules = [];
         
@@ -46,7 +46,7 @@ Ext.define('CA.techservices.validator.Validator',{
             Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
 
-//console.log('validator-constructor-before delete: ', name,rule);
+            //console.log('validator-constructor-before delete: ', name,rule);
 
             if ( !Ext.isEmpty(name) ) {
                 var new_rule = Ext.clone(rule);

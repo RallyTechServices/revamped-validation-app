@@ -56,8 +56,9 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     
     getFilters: function() {        
 
-        return Rally.data.wsapi.Filter.and([
-            {property:'Parent',operator:'=',value:null}
-        ]);
+        // return Rally.data.wsapi.Filter.and([
+        //     {property:'Parent',operator:'=',value:null}
+        // ]);
+        return [];
     }
 });
