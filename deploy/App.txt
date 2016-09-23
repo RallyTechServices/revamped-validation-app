@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Tue Sep 13 2016 20:31:56 GMT-0400 (EDT) -->
+    <!--  Build Date: Fri Sep 23 2016 17:14:29 GMT-0400 (EDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Sep 13 2016 20:31:56 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Fri Sep 23 2016 17:14:29 GMT-0400 (EDT)";
         var STORY    = "US569";
         var BUILDER  = "srhoads";
-        var CHECKSUM = 130319577040;
+        var CHECKSUM = 131565695077;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -562,11 +562,13 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     applyRuleToRecord: function(record) {
-        console.log("ApplyRuleToRecord:",record);        
-
-        if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+        console.log("ApplyRuleToRecord:",record); 
+        //	RULE: Initiative not assigned to ‘Global Development’ or one-level below       
+        if ( record.get('Project').Name == this.project_PortfolioRoot ) {
             return null; // no rule violation   
-        } else {
+        } else if ((record.get('Project').Parent != null) && (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+            return null; // no rule violation (one-level below Global)
+        } else {         // doesn't look like the Initiative is in the right place!
             return this.getDescription();
         }
     },
@@ -1488,6 +1490,7 @@ Ext.define('CA.techservices.validator.Validator',{
     
     // returns a promise, promise fulfilled by hash of results by model type
     gatherData: function() {
+
         var deferred = Ext.create('Deft.Deferred'),
             me = this;
                 
@@ -1750,7 +1753,6 @@ Ext.define("TSValidationApp", {
         this._doLayout();
 
         // get any data model customizations ... then get the data and render the chart
-        
         this._fetchPortfolioItemTypes().then({
             success: this._initializeApp, 
             failure: this._showErrorMsg,
@@ -1826,6 +1828,7 @@ Ext.define("TSValidationApp", {
             // for rules that need to have a specific project folder for portfolio items
             rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
         });
+        
         Ext.Array.each(me.rulesByType.PortfolioItemTimeboxYes, function(rule){
             // get the collection of workspace specific portfolio item names per level
             rule.portfolioItemTypes = portfolioItemTypes;

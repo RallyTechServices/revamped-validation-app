@@ -46,11 +46,13 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     },
     
     applyRuleToRecord: function(record) {
-        console.log("ApplyRuleToRecord:",record);        
-
-        if (( record.get('Project').Name == this.project_PortfolioRoot ) || (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+        console.log("ApplyRuleToRecord:",record); 
+        //	RULE: Initiative not assigned to ‘Global Development’ or one-level below       
+        if ( record.get('Project').Name == this.project_PortfolioRoot ) {
             return null; // no rule violation   
-        } else {
+        } else if ((record.get('Project').Parent != null) && (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+            return null; // no rule violation (one-level below Global)
+        } else {         // doesn't look like the Initiative is in the right place!
             return this.getDescription();
         }
     },
