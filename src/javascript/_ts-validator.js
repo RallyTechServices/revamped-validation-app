@@ -136,6 +136,7 @@ Ext.define('CA.techservices.validator.Validator',{
     
     // returns a promise, promise fulfilled by hash of results by model type
     gatherData: function() {
+
         var deferred = Ext.create('Deft.Deferred'),
             me = this;
                 

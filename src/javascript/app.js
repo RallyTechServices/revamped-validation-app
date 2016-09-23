@@ -83,7 +83,6 @@ Ext.define("TSValidationApp", {
         this._doLayout();
 
         // get any data model customizations ... then get the data and render the chart
-        
         this._fetchPortfolioItemTypes().then({
             success: this._initializeApp, 
             failure: this._showErrorMsg,
@@ -159,6 +158,7 @@ Ext.define("TSValidationApp", {
             // for rules that need to have a specific project folder for portfolio items
             rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
         });
+        
         Ext.Array.each(me.rulesByType.PortfolioItemTimeboxYes, function(rule){
             // get the collection of workspace specific portfolio item names per level
             rule.portfolioItemTypes = portfolioItemTypes;
