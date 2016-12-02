@@ -553,8 +553,6 @@ Ext.define("TSValidationApp", {
 
     _getChartConfig: function(data) {
 
-        this.logger.log("_getChartConfig: ",data.series,data.categories,data.categories.length);
-        this.logger.log("_getChartConfig2: ",this,this.down('#portfolioRuleCheckBox'));
         var title_prefix = "";
         if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
@@ -593,6 +591,11 @@ Ext.define("TSValidationApp", {
             yAxis: { 
                 min: 0,
                 title: { text: 'Count' }
+            },
+            tooltip: {
+                positioner: function (w,h,point) {
+                    return { x: point.plotX, y: point.plotY -  10 };
+                }
             },
             plotOptions: {
                 column: {

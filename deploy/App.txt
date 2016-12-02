@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Dec 01 2016 18:45:07 GMT-0800 (PST) -->
+    <!--  Build Date: Thu Dec 01 2016 18:54:07 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Dec 01 2016 18:45:07 GMT-0800 (PST)";
+        var APP_BUILD_DATE = "Thu Dec 01 2016 18:54:07 GMT-0800 (PST)";
         var STORY    = "US569";
         var BUILDER  = "jmartin";
-        var CHECKSUM = 164197529265;
+        var CHECKSUM = 163776792855;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -2444,8 +2444,6 @@ Ext.define("TSValidationApp", {
 
     _getChartConfig: function(data) {
 
-        this.logger.log("_getChartConfig: ",data.series,data.categories,data.categories.length);
-        this.logger.log("_getChartConfig2: ",this,this.down('#portfolioRuleCheckBox'));
         var title_prefix = "";
         if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
@@ -2484,6 +2482,11 @@ Ext.define("TSValidationApp", {
             yAxis: { 
                 min: 0,
                 title: { text: 'Count' }
+            },
+            tooltip: {
+                positioner: function (w,h,point) {
+                    return { x: point.plotX, y: point.plotY -  10 };
+                }
             },
             plotOptions: {
                 column: {
