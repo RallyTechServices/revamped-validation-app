@@ -293,76 +293,76 @@ Ext.define("TSValidationApp", {
                 }
             ]);
             // add the spacer panel after the rule-selector panel
-            this.down('#filters_box').add([
-                {
-                    xtype: 'panel',
-                    //title: 'Spacer',
-                    width: 10,
-                    height: 80,
-                    border: 0
-                },
-                {
-                    xtype: 'panel',
-                    title: 'Select Timeboxes',
-                    itemId: 'selectTimeboxes',
-                    height: 80,                
-                    layout:{type:'hbox',align:'right'},
-                    items:[
-                        {
-                        xtype: 'rallyiterationcombobox',
-                        itemId: 'iterationSelector',
-                        allowNoEntry: true,
-                        defaultToCurrentTimebox: true,  // client use-case: easier clean-up for sprint
-                        autoSelectCurrentItem: true,    // should have defaulted
-                        //defaultSelectionPosition: 'first',
-                        stateful: true,
-                        stateId: 'iterationSelectorState',
-                        stateEvents: ['change','select','setvalue'],
-                        margin: 10,        
-                        fieldLabel: 'Iteration',
-                        labelAlign: 'right',
-                        width: 340
-                        },
-                        {   
-                        xtype: 'rallyreleasecombobox',
-                        itemId: 'releaseSelector',
-                        defaultToCurrentTimebox: true,
-                        autoSelectCurrentItem: true,    // should have defaulted
-                        //defaultSelectionPosition: 'first',
-                        stateful: true,
-                        stateId: 'releaseSelectorState',
-                        stateEvents: ['change','select','setvalue'],
-                        allowNoEntry: true, 
-                        margin: 10,
-                        fieldLabel: 'Release',
-                        labelAlign: 'right',
-                        width: 340,                        
-                        }] 
-                }, // end of the TimeBox Selectors
-                {
-                    xtype: 'panel',
-                    height: 80,
-                    width: '30%',
-                    border: 0,
-                    layout:{type:'hbox',align: 'right',margin: 10},
-                    items:[
-                        {
-                            xtype: 'rallybutton',
-                            scope: me,
-                            margin: '40 0 0 10', //top right bottom left
-                            text: 'Apply Selections',
-                            handler: function() {
-                                //Ext.Msg.alert('Button', 'You clicked me');
-                                console.log("In the button:",
-                                    this.getSetting('showSchedulable'),
-                                    this.getSetting('rootPortfolioProject')
-                                );
-                                me._loadData();    
-                            }
-                        }
-                    ]
-                }
-            ]);
+//            this.down('#filters_box').add([
+//                {
+//                    xtype: 'panel',
+//                    //title: 'Spacer',
+//                    width: 10,
+//                    height: 80,
+//                    border: 0
+//                },
+//                {
+//                    xtype: 'panel',
+//                    title: 'Select Timeboxes',
+//                    itemId: 'selectTimeboxes',
+//                    height: 80,                
+//                    layout:{type:'hbox',align:'right'},
+//                    items:[
+//                        {
+//                        xtype: 'rallyiterationcombobox',
+//                        itemId: 'iterationSelector',
+//                        allowNoEntry: true,
+//                        defaultToCurrentTimebox: true,  // client use-case: easier clean-up for sprint
+//                        autoSelectCurrentItem: true,    // should have defaulted
+//                        //defaultSelectionPosition: 'first',
+//                        stateful: true,
+//                        stateId: 'iterationSelectorState',
+//                        stateEvents: ['change','select','setvalue'],
+//                        margin: 10,        
+//                        fieldLabel: 'Iteration',
+//                        labelAlign: 'right',
+//                        width: 340
+//                        },
+//                        {   
+//                        xtype: 'rallyreleasecombobox',
+//                        itemId: 'releaseSelector',
+//                        defaultToCurrentTimebox: true,
+//                        autoSelectCurrentItem: true,    // should have defaulted
+//                        //defaultSelectionPosition: 'first',
+//                        stateful: true,
+//                        stateId: 'releaseSelectorState',
+//                        stateEvents: ['change','select','setvalue'],
+//                        allowNoEntry: true, 
+//                        margin: 10,
+//                        fieldLabel: 'Release',
+//                        labelAlign: 'right',
+//                        width: 340,                        
+//                        }] 
+//                }, // end of the TimeBox Selectors
+//                {
+//                    xtype: 'panel',
+//                    height: 80,
+//                    width: '30%',
+//                    border: 0,
+//                    layout:{type:'hbox',align: 'right',margin: 10},
+//                    items:[
+//                        {
+//                            xtype: 'rallybutton',
+//                            scope: me,
+//                            margin: '40 0 0 10', //top right bottom left
+//                            text: 'Apply Selections',
+//                            handler: function() {
+//                                //Ext.Msg.alert('Button', 'You clicked me');
+//                                console.log("In the button:",
+//                                    this.getSetting('showSchedulable'),
+//                                    this.getSetting('rootPortfolioProject')
+//                                );
+//                                me._loadData();    
+//                            }
+//                        }
+//                    ]
+//                }
+//            ]);
         }
     },
     
@@ -434,12 +434,10 @@ Ext.define("TSValidationApp", {
 
         var rules = [];
         
-        me.logger.log('_instantiateValidator');
 
         // ************************
         // Initiatives and Higher are not schedule-able.
         if ( me.getSetting('showSchedulable')) {
-            me.logger.log("_instantiateValidator:Timebox: ", me, me.down('#iterationSelector').value,me.down('#releaseSelector').value);
 
             //this.getSetting('showSchedulable')
                 // ** we don't have any Feature Rules so far ***
@@ -467,32 +465,33 @@ Ext.define("TSValidationApp", {
         
         if (this.getSetting('showSchedulable')){
             // setup base timebox filters
-            var story_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]);
-            var defect_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]);    
-            var task_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]); 
+//            var story_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]);
+//            var defect_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]);    
+//            var task_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]); 
 
+            var basefilter = Rally.data.wsapi.Filter.and([{property:'ObjectID',operator:'>',value:'0'}]);
             // create the validator object 
             validator = Ext.create('CA.techservices.validator.Validator',{
                 rules: rules,
                 fetchFields: ['FormattedID','ObjectID'],
                 // get any settings from the timebox selectors
                 baseFilters:{ 
-                    HierarchicalRequirement: story_base_timebox_filter,
-                    Defect: defect_base_timebox_filter,
-                    Task: task_base_timebox_filter
+                    HierarchicalRequirement: basefilter, //story_base_timebox_filter,
+                    Defect: basefilter, // defect_base_timebox_filter,
+                    Task: basefilter, // task_base_timebox_filter
                 },
                 pointEvents: {
                     click: function() {
-                    me.showDrillDown(this._records,this._name);
+                        me.showDrillDown(this._records,this._name);
                     }
                 }
             });
