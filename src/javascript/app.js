@@ -63,12 +63,16 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
             {xtype:'tsstoryacceptednoiterationrule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'}
+            
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
             {xtype:'tsdefectacceptednotclosedrule'},
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'}
+
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
