@@ -1,17 +1,17 @@
-Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
+Ext.define('CA.techservices.validation.StoryScheduledNoReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynoreleaseexcludeunfinishedrule',
+    alias:  'widget.tsstoryschedulednoreleaseexcludeinactiverule',
     
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Release (Story Excl Unfinish)'
+        label: 'No Release (Story Excl Unsched)'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories not assigned to a Release excluding those with [Unfinished] in the Name."
+            "Scheduled stories not assigned to a Release, excluding those with [Unfinished] in the Name."
         );
     },
     
@@ -29,8 +29,11 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
 
         //console.log("applyRuleToRecord",record);
 
-        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
-            var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
+        if ( Ext.isEmpty(record.get('Release')) &&
+             !/^\[Unfinished\]/.test(record.get('Name')) &&
+             record.get('DirectChildrenCount') < 1 &&
+             record.get('Iteration') != null) {
+            var msg = "Scheduled stories must be assigned to a Release unless they have [Unfinished] in the name.";
             return msg;   
         }
         
@@ -41,7 +44,8 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
         return Rally.data.wsapi.Filter.and([
             {property:'Release',operator:'=',value:null},
             {property:'Name',operator: '!contains', value: "[Unfinished]" },
-            {property:'DirectChildrenCount',operator: '=', value: 0 }            
+            {property:'DirectChildrenCount',operator: '=', value: 0 },
+            {property:'Iteration',operator:'!=',value:null}           
         ]);
     }
 });

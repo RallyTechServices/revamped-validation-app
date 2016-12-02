@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Fri Sep 23 2016 17:14:29 GMT-0400 (EDT) -->
+    <!--  Build Date: Thu Dec 01 2016 18:54:07 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Fri Sep 23 2016 17:14:29 GMT-0400 (EDT)";
+        var APP_BUILD_DATE = "Thu Dec 01 2016 18:54:07 GMT-0800 (PST)";
         var STORY    = "US569";
-        var BUILDER  = "srhoads";
-        var CHECKSUM = 131565695077;
+        var BUILDER  = "jmartin";
+        var CHECKSUM = 163776792855;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -285,6 +285,116 @@ Ext.define('CA.techservices.validation.BaseRule',{
         return this.label;
     }
 });
+Ext.define('CA.techservices.validation.ArtifactIterationMismatchesReleaseRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsartifactiterationmismatchesreleaserule',
+     
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'Release Does Not Match Iteration'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0} ({1})</strong>: {2}",
+            this.label,
+            "If there is an iteration, there should be a release with the same timeframe."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Iteration','StartDate','EndDate','Release','ReleaseStartDate','ReleaseDate'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        if ( Ext.isEmpty(record.get('Iteration')) ) {
+            return null;
+        }
+        
+        if ( Ext.isEmpty(record.get('Release')) ) {
+            return "Has an iteration but does not have a release";
+        }
+        
+        var iteration = record.get('Iteration');
+        var release = record.get('Release');
+        
+        if ( iteration.EndDate < release.ReleaseStartDate ) {
+            return "Iteration ends before release begins";
+        }
+        
+        if ( iteration.StartDate > release.ReleaseDate ) {
+            return "Iteration starts after release ends";
+        }
+        
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'Iteration.ObjectID',operator:'>',value:1}
+        ]);
+    },
+    
+    getUserFriendlyRuleLabel: function() {
+        var model_map = { 'HierarchicalRequirement' : 'Story', 'Defect' : 'Defect' };
+        return Ext.String.format("{0} ({1})", this.label, model_map[this.model]);
+    }
+});
+Ext.define('CA.techservices.validation.ArtifactReleaseNoteButNoProductOrMilestoneRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsartifactreleasenotebutnoproductmilestonerule',
+     
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'Missing Product or Milestone'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0} ({1})</strong>: {2}",
+            this.label,
+            "When Release Notes Needed=Yes and Release Notes Complete=No there should be a Milestone or Product."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Milestones','c_ReleaseNotesComplete','c_ReleaseNotesNeeded','c_Product'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        if ( !record.get('c_ReleaseNotesNeeded') || ( record.get('c_ReleaseNotesComplete')) ) {
+            return null;
+        }
+        
+        console.log('-->', record.get('Milestones'), record.get('Product'));
+        
+        if ( ( Ext.isEmpty(record.get('Milestones')) || record.get('Milestones').Count == 0 ) && Ext.isEmpty(record.get('Product')) ) {
+            return "Should have either milestone or product if Release Notes Complete = No and Release Notes Needed = Yes.";
+        }
+        
+        return null;
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+        {property:'c_ReleaseNotesNeeded',value:true},
+        {property:'c_ReleaseNotesComplete',value:false}
+        
+        ]);
+    },
+    
+    getUserFriendlyRuleLabel: function() {
+        var model_map = { 'HierarchicalRequirement' : 'Story', 'Defect' : 'Defect' };
+        return Ext.String.format("{0} ({1})", this.label, model_map[this.model]);
+    }
+});
 Ext.define('CA.techservices.validation.DefectAcceptedNotClosed',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsdefectacceptednotclosedrule',
@@ -450,6 +560,59 @@ return null;
         // ]);
     }
 });
+Ext.define('CA.techservices.validation.FeatureNoParentRule',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsfeaturenoparentrule',
+    
+    config: {
+        /*
+        * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+        * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+        */
+        portfolioItemTypes:[],
+        label: 'Feature needs Parent' 
+    },
+    getModel:function(){
+        return this.portfolioItemTypes[0];  // 0-feature,1-initiative, etc..
+    },
+    getDescription: function() {
+        var msg = Ext.String.format(
+            "{0} must be linked to a {1}",
+            /[^\/]*$/.exec(this.getModel()),
+            this.portfolioItemTypes[1]
+        );
+        return msg;
+    },
+    
+    getFetchFields: function() {
+        return ['Name','Parent'];
+    },
+    getLabel: function(){
+        this.label = Ext.String.format(
+            "{0} without {1}",
+            /[^\/]*$/.exec(this.getModel()), //regex retrieves string after 'PortfolioItem/'
+            /[^\/]*$/.exec(this.portfolioItemTypes[1])
+            );
+        return this.label;
+    },
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+
+        if ( Ext.isEmpty(record.get('Parent') ) ) {
+            return this.getDescription();   
+        } else {
+            return null; // no rule violation
+        }
+    },
+    
+    getFilters: function() {        
+        return [];
+    }
+});
 Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     extend: 'CA.techservices.validation.BaseRule',
     alias:  'widget.tsinitiativenothemerule',
@@ -497,7 +660,6 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     },
     
     applyRuleToRecord: function(record) {
-        console.log("applyRuleToRecord",record);
 
         if ( Ext.isEmpty(record.get('Parent') ) ) {
             return this.getDescription();   
@@ -563,10 +725,10 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
     
     applyRuleToRecord: function(record) {
         console.log("ApplyRuleToRecord:",record); 
-        //	RULE: Initiative not assigned to ‘Global Development’ or one-level below       
-        if ( record.get('Project').Name == this.project_PortfolioRoot ) {
+        //  RULE: Initiative not assigned to �Global Development� or one-level below       
+        if ( record.get('Project').Name == this.projectPortfolioRoot ) {
             return null; // no rule violation   
-        } else if ((record.get('Project').Parent != null) && (record.get('Project').Parent.Name == this.project_PortfolioRoot)) {
+        } else if ((record.get('Project').Parent != null) && (record.get('Project').Parent.Name == this.projectPortfolioRoot)) {
             return null; // no rule violation (one-level below Global)
         } else {         // doesn't look like the Initiative is in the right place!
             return this.getDescription();
@@ -579,6 +741,53 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
        //     {property:'Parent',operator:'=',value:null}
        // ]);
        return [];
+    }
+});
+Ext.define('CA.techservices.validation.StoryAcceptedButNoIteration',{
+    extend: 'CA.techservices.validation.BaseRule',
+    alias:  'widget.tsstoryacceptednoiterationrule',
+    
+   
+    config: {
+        model: 'HierarchicalRequirement',
+        label: 'No Iteration (Acc Story)'
+    },
+    
+    getDescription: function() {
+        return Ext.String.format("<strong>{0}</strong>: {1}",
+            this.label,
+            "Accepted stories without an Iteration."
+        );
+    },
+    
+    getFetchFields: function() {
+        return ['Iteration','ScheduleState'];
+    },
+    
+    isValidField: function(model, field_name) {
+        var field_defn = model.getField(field_name);
+        return ( !Ext.isEmpty(field_defn) );
+    },
+    
+    applyRuleToRecord: function(record) {
+        //var missingFields = [];
+
+        //console.log("applyRuleToRecord",record);
+
+        if ( Ext.isEmpty(record.get('Iteration')) &&
+             record.get('ScheduleState') == 'Accepted') {
+            var msg = "Accepted stories must be assigned to the Iteration where they were fixed.";
+            return msg;   
+        }
+        
+        return null; // no rule violation
+    },
+    
+    getFilters: function() {        
+        return Rally.data.wsapi.Filter.and([
+            {property:'Iteration',operator: '=', value: null },
+            {property:'ScheduleState',operator:'=',value:'Accepted'}           
+        ]);
     }
 });
 Ext.define('CA.techservices.validation.StoryCompletedNoActuals',{
@@ -762,20 +971,20 @@ Ext.define('CA.techservices.validation.StoryNoFeatureExcludeUnfinishedRule',{
         ]);
     }
 });
-Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
+Ext.define('CA.techservices.validation.StoryScheduledNoReleaseExcludeUnfinishedRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstorynoreleaseexcludeunfinishedrule',
+    alias:  'widget.tsstoryschedulednoreleaseexcludeinactiverule',
     
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Release (Story Excl Unfinish)'
+        label: 'No Release (Story Excl Unsched)'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories not assigned to a Release excluding those with [Unfinished] in the Name."
+            "Scheduled stories not assigned to a Release, excluding those with [Unfinished] in the Name."
         );
     },
     
@@ -793,8 +1002,11 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
 
         //console.log("applyRuleToRecord",record);
 
-        if ( Ext.isEmpty(record.get('Release') ) && (!/^\[Unfinished\]/.test(record.get('Name') ) ) && (record.get('DirectChildrenCount') < 1)) {
-            var msg = "Stories must be assigned to a Release unless they have [Unfinished] in the name.";
+        if ( Ext.isEmpty(record.get('Release')) &&
+             !/^\[Unfinished\]/.test(record.get('Name')) &&
+             record.get('DirectChildrenCount') < 1 &&
+             record.get('Iteration') != null) {
+            var msg = "Scheduled stories must be assigned to a Release unless they have [Unfinished] in the name.";
             return msg;   
         }
         
@@ -805,7 +1017,8 @@ Ext.define('CA.techservices.validation.StoryNoReleaseExcludeUnfinishedRule',{
         return Rally.data.wsapi.Filter.and([
             {property:'Release',operator:'=',value:null},
             {property:'Name',operator: '!contains', value: "[Unfinished]" },
-            {property:'DirectChildrenCount',operator: '=', value: 0 }            
+            {property:'DirectChildrenCount',operator: '=', value: 0 },
+            {property:'Iteration',operator:'!=',value:null}           
         ]);
     }
 });
@@ -822,7 +1035,7 @@ Ext.define('CA.techservices.validation.StoryNoNullPlanEstimateRule',{
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Stories in a current or past iteration should not be greater than defined and missing a plan estimate."
+            "Stories in a current or past iteration should not be in progress or later and missing a plan estimate."
         );
     },
     
@@ -838,23 +1051,20 @@ Ext.define('CA.techservices.validation.StoryNoNullPlanEstimateRule',{
     applyRuleToRecord: function(record) {
         var missingFields = [];
 
-        if ( Ext.isEmpty(record.get('Iteration') ) ) {
-            return null;
-        }
-        
-        var today = Rally.util.DateTime.toIsoString(new Date());
-        
-        if ( record.get('Iteration').StartDate > today ) {
-            return null;
-        }
-        
-        if ( record.get('ScheduleState') == "Defined" ) {
-            return null;
-        }
-        
         if ( !Ext.isEmpty(record.get('PlanEstimate') ) ) {
             return null;
         }
+
+        var today = Rally.util.DateTime.toIsoString(new Date());
+        
+        if ( (record.get('ScheduleState') == "Defined" ||
+              record.get('ScheduleState') == "To Be Defined") &&
+             (Ext.isEmpty(record.get('Iteration') ) ||
+              record.get('Iteration').StartDate > today) ) {
+            // it hasn't been started yet and hasn't been scheduled for the current or past iteration
+            return null;
+        }
+        
         return Ext.String.format('Has null for plan estimate');
     },
     
@@ -862,8 +1072,8 @@ Ext.define('CA.techservices.validation.StoryNoNullPlanEstimateRule',{
         var today = Rally.util.DateTime.toIsoString(new Date());
 
         return Rally.data.wsapi.Filter.and([
-            {property:'PlanEstimate',operator:'>',value:0},
-            {property:'Iteration.StartDate',operator: '<', value: today },
+            {property:'PlanEstimate',operator:'=',value:0},
+            {property:'Iteration.StartDate',operator: '<=', value: today },
             {property:'ScheduleState',operator: '>', value: 'Defined' }
         ]);
     }
@@ -880,12 +1090,12 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Story Release Should be the same as Feature Release excluding those with [Unfinished] in the Name."
+            "Story Release should be the same as or earlier than its Feature's Release, excluding stories with [Unfinished] in the Name or unscheduled Features."
         );
     },
     
     getFetchFields: function() {
-        return ['Feature','Name','Release'];
+        return ['Feature','Name','Release','ReleaseStartDate'];
     },
     
     isValidField: function(model, field_name) {
@@ -895,22 +1105,28 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
     
     applyRuleToRecord: function(record) {
         // the statement below - short-circuits if the story does not have a release or the feature does not have a release. 
-        if (((record.get('Release') && record.get('Feature')) && record.get('Feature').Release) && ((record.get('Release').Name) == (record.get('Feature').Release.Name)))  {
+        if (record.get('Feature') == null ||
+            record.get('Release') == null) {
+            return null; // either it's a placeholder feature or the story isn't scheduled
+        }
+        if (record.get('Feature').Release &&
+            record.get('Feature').Release.Name == record.get('Release').Name) {
             return null; // no rule violation
+        }
+        if (record.get('Feature').Release == null ||
+            record.get('Release').ReleaseStartDate < record.get('Feature').Release.ReleaseStartDate) {
+            return null; // accepted story on placeholder or story was advance work for a future feature
+        }
+
+        var us_release = record.get('Release').Name;
+        var fe_msg = "No Release";
+        if (record.get('Feature').Release != null) {
+            fe_msg = record.get('Feature').Release.Name;
         } else {
-            var us_release = "No Release";
-            if (record.get('Release') != null) {
-                us_release = record.get('Release').Name;
-            }
-            var fe_msg = "No Release";
-            if (record.get('Feature') && (record.get('Feature').Release != null)) {
-                fe_msg = record.get('Feature').Release.Name;
-            } else {
-                fe_msg = "No Feature at all!";
-            }
-        
-            return Ext.String.format("Story.Release({0}) != Feature.Release ({1})!",us_release,fe_msg);
-        }        
+            fe_msg = "No Feature Release";
+        }
+    
+        return Ext.String.format("Story.Release({0}) != Feature.Release ({1})!",us_release,fe_msg);
     },
     
     getFilters: function() {        
@@ -1219,11 +1435,11 @@ Ext.define('CA.techservices.validation.TaskTodoNoEstimateRule',{
         return this.label;
     }
 });
-Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
+Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsthemenoproductgoalrule',
+    alias:  'widget.tsthemeprojectnotglobaldevelopmentrule',
     
-   
+    
     config: {
        /* 
         * [{}] a Target root project for high-levelpassed in from calling routine. 
@@ -1231,44 +1447,47 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
         * Set Name of the Top-Level container where teams *must* put their Initiatives (and higher)
         */
         projectPortfolioRoot: null,
-        /*
+       /*
         * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
         * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
         */
         portfolioItemTypes:[],
         //model: 'PortfolioItem/Theme',
-        label: 'Theme needs Parent'
+        label: 'Theme Wrong Project'
     },
+    
     getModel: function(){
-        return this.portfolioItemTypes[2];  // 0-feature, 1-initiative, etc...
+        return this.portfolioItemTypes[2]; // 0-feature, 1-initiative
     },
     getDescription: function() {
         var msg = Ext.String.format(
-                "{0} must be linked to a {1}.",
-                /[^\/]*$/.exec(this.getModel()),
-                this.portfolioItemTypes[3]
-                );
+            "{0} must be saved into *{1}*.",
+            /[^\/]*$/.exec(this.getModel()),
+            this.projectPortfolioRoot
+            );
         return msg;
     },
     
     getFetchFields: function() {
-        return ['Name','Parent'];
+        return ['Name','Project'];
     },
+    
     getLabel: function(){
         this.label = Ext.String.format(
-            "{0} needs {1}",
-            /[^\/]*$/.exec(this.getModel()),
-            /[^\/]*$/.exec(this.portfolioItemTypes[3])
-        );
+            "{0} Wrong Project",
+            /[^\/]*$/.exec(this.getModel())
+            );
         return this.label;
     },
+
     isValidField: function(model, field_name) {
         var field_defn = model.getField(field_name);
         return ( !Ext.isEmpty(field_defn) );
     },
     
     applyRuleToRecord: function(record) {
-        if ( Ext.isEmpty(record.get('Parent') ) ) {
+    
+        if ( record.get('Project').Name != this.projectPortfolioRoot )  {
             return this.getDescription();   
         } else {
             return null; // no rule violation
@@ -1277,10 +1496,12 @@ Ext.define('CA.techservices.validation.ThemeNoProductGoalRule',{
     
     getFilters: function() {        
 
+        // getting null error on parent
         // return Rally.data.wsapi.Filter.and([
         //     {property:'Parent',operator:'=',value:null}
-        // ]);
+        //]);
         return [];
+       
     }
 });
 Ext.define('CA.techservices.validation.ThemeProjectNotGlobalDevelopmentRule',{
@@ -1719,30 +1940,37 @@ Ext.define("TSValidationApp", {
         }
     },
     rulesByType: {
-        PortfolioItemTimeboxNo: [ // Initiatives and higher          
-            {xtype:'tsthemenoproductgoalrule'},
+        PortfolioItemTimeboxNo: [          
             {xtype:'tsinitiativenothemerule'},
+            {xtype:'tsfeaturenoparentrule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
         // PortfolioItemTimeboxYes: [ // Features into Releases
         // ],
         HierarchicalRequirement: [
-            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
+            //{xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
             {xtype:'tsstorynofeatureexcludeunfinishedrule' },
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
-            {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
+            {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
+            {xtype:'tsstoryacceptednoiterationrule' },
+            {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
+            
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
             {xtype:'tsdefectacceptednotclosedrule'},
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'}
+
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
-            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
+            //{xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
             {xtype:'tstasktodonoestimaterule'}
           //  {xtype:'tstaskactivenotodorule'}
         ]
@@ -1957,76 +2185,76 @@ Ext.define("TSValidationApp", {
                 }
             ]);
             // add the spacer panel after the rule-selector panel
-            this.down('#filters_box').add([
-                {
-                    xtype: 'panel',
-                    //title: 'Spacer',
-                    width: 10,
-                    height: 80,
-                    border: 0
-                },
-                {
-                    xtype: 'panel',
-                    title: 'Select Timeboxes',
-                    itemId: 'selectTimeboxes',
-                    height: 80,                
-                    layout:{type:'hbox',align:'right'},
-                    items:[
-                        {
-                        xtype: 'rallyiterationcombobox',
-                        itemId: 'iterationSelector',
-                        allowNoEntry: true,
-                        defaultToCurrentTimebox: true,  // client use-case: easier clean-up for sprint
-                        autoSelectCurrentItem: true,    // should have defaulted
-                        //defaultSelectionPosition: 'first',
-                        stateful: true,
-                        stateId: 'iterationSelectorState',
-                        stateEvents: ['change','select','setvalue'],
-                        margin: 10,        
-                        fieldLabel: 'Iteration',
-                        labelAlign: 'right',
-                        width: 340
-                        },
-                        {   
-                        xtype: 'rallyreleasecombobox',
-                        itemId: 'releaseSelector',
-                        defaultToCurrentTimebox: true,
-                        autoSelectCurrentItem: true,    // should have defaulted
-                        //defaultSelectionPosition: 'first',
-                        stateful: true,
-                        stateId: 'releaseSelectorState',
-                        stateEvents: ['change','select','setvalue'],
-                        allowNoEntry: true, 
-                        margin: 10,
-                        fieldLabel: 'Release',
-                        labelAlign: 'right',
-                        width: 340,                        
-                        }] 
-                }, // end of the TimeBox Selectors
-                {
-                    xtype: 'panel',
-                    height: 80,
-                    width: '30%',
-                    border: 0,
-                    layout:{type:'hbox',align: 'right',margin: 10},
-                    items:[
-                        {
-                            xtype: 'rallybutton',
-                            scope: me,
-                            margin: '40 0 0 10', //top right bottom left
-                            text: 'Apply Selections',
-                            handler: function() {
-                                //Ext.Msg.alert('Button', 'You clicked me');
-                                console.log("In the button:",
-                                    this.getSetting('showSchedulable'),
-                                    this.getSetting('rootPortfolioProject')
-                                );
-                                me._loadData();    
-                            }
-                        }
-                    ]
-                }
-            ]);
+//            this.down('#filters_box').add([
+//                {
+//                    xtype: 'panel',
+//                    //title: 'Spacer',
+//                    width: 10,
+//                    height: 80,
+//                    border: 0
+//                },
+//                {
+//                    xtype: 'panel',
+//                    title: 'Select Timeboxes',
+//                    itemId: 'selectTimeboxes',
+//                    height: 80,                
+//                    layout:{type:'hbox',align:'right'},
+//                    items:[
+//                        {
+//                        xtype: 'rallyiterationcombobox',
+//                        itemId: 'iterationSelector',
+//                        allowNoEntry: true,
+//                        defaultToCurrentTimebox: true,  // client use-case: easier clean-up for sprint
+//                        autoSelectCurrentItem: true,    // should have defaulted
+//                        //defaultSelectionPosition: 'first',
+//                        stateful: true,
+//                        stateId: 'iterationSelectorState',
+//                        stateEvents: ['change','select','setvalue'],
+//                        margin: 10,        
+//                        fieldLabel: 'Iteration',
+//                        labelAlign: 'right',
+//                        width: 340
+//                        },
+//                        {   
+//                        xtype: 'rallyreleasecombobox',
+//                        itemId: 'releaseSelector',
+//                        defaultToCurrentTimebox: true,
+//                        autoSelectCurrentItem: true,    // should have defaulted
+//                        //defaultSelectionPosition: 'first',
+//                        stateful: true,
+//                        stateId: 'releaseSelectorState',
+//                        stateEvents: ['change','select','setvalue'],
+//                        allowNoEntry: true, 
+//                        margin: 10,
+//                        fieldLabel: 'Release',
+//                        labelAlign: 'right',
+//                        width: 340,                        
+//                        }] 
+//                }, // end of the TimeBox Selectors
+//                {
+//                    xtype: 'panel',
+//                    height: 80,
+//                    width: '30%',
+//                    border: 0,
+//                    layout:{type:'hbox',align: 'right',margin: 10},
+//                    items:[
+//                        {
+//                            xtype: 'rallybutton',
+//                            scope: me,
+//                            margin: '40 0 0 10', //top right bottom left
+//                            text: 'Apply Selections',
+//                            handler: function() {
+//                                //Ext.Msg.alert('Button', 'You clicked me');
+//                                console.log("In the button:",
+//                                    this.getSetting('showSchedulable'),
+//                                    this.getSetting('rootPortfolioProject')
+//                                );
+//                                me._loadData();    
+//                            }
+//                        }
+//                    ]
+//                }
+//            ]);
         }
     },
     
@@ -2098,12 +2326,10 @@ Ext.define("TSValidationApp", {
 
         var rules = [];
         
-        me.logger.log('_instantiateValidator');
 
         // ************************
         // Initiatives and Higher are not schedule-able.
         if ( me.getSetting('showSchedulable')) {
-            me.logger.log("_instantiateValidator:Timebox: ", me, me.down('#iterationSelector').value,me.down('#releaseSelector').value);
 
             //this.getSetting('showSchedulable')
                 // ** we don't have any Feature Rules so far ***
@@ -2131,32 +2357,33 @@ Ext.define("TSValidationApp", {
         
         if (this.getSetting('showSchedulable')){
             // setup base timebox filters
-            var story_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]);
-            var defect_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]);    
-            var task_base_timebox_filter = Rally.data.wsapi.Filter.and([
-                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
-                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
-                ]); 
+//            var story_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]);
+//            var defect_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]);    
+//            var task_base_timebox_filter = Rally.data.wsapi.Filter.and([
+//                {property:'Iteration', operator: '=', value: me.down('#iterationSelector').value },
+//                {property:'Release', operator: '=', value: me.down('#releaseSelector').value}
+//                ]); 
 
+            var basefilter = Rally.data.wsapi.Filter.and([{property:'ObjectID',operator:'>',value:'0'}]);
             // create the validator object 
             validator = Ext.create('CA.techservices.validator.Validator',{
                 rules: rules,
                 fetchFields: ['FormattedID','ObjectID'],
                 // get any settings from the timebox selectors
                 baseFilters:{ 
-                    HierarchicalRequirement: story_base_timebox_filter,
-                    Defect: defect_base_timebox_filter,
-                    Task: task_base_timebox_filter
+                    HierarchicalRequirement: basefilter, //story_base_timebox_filter,
+                    Defect: basefilter, // defect_base_timebox_filter,
+                    Task: basefilter, // task_base_timebox_filter
                 },
                 pointEvents: {
                     click: function() {
-                    me.showDrillDown(this._records,this._name);
+                        me.showDrillDown(this._records,this._name);
                     }
                 }
             });
@@ -2217,8 +2444,6 @@ Ext.define("TSValidationApp", {
 
     _getChartConfig: function(data) {
 
-        this.logger.log("_getChartConfig: ",data.series,data.categories,data.categories.length);
-        this.logger.log("_getChartConfig2: ",this,this.down('#portfolioRuleCheckBox'));
         var title_prefix = "";
         if ( this.down('#portfolioRuleCheckBox') ) {
             if (title_prefix.length > 0){
@@ -2257,6 +2482,11 @@ Ext.define("TSValidationApp", {
             yAxis: { 
                 min: 0,
                 title: { text: 'Count' }
+            },
+            tooltip: {
+                positioner: function (w,h,point) {
+                    return { x: point.plotX, y: point.plotY -  10 };
+                }
             },
             plotOptions: {
                 column: {
@@ -2326,7 +2556,6 @@ Ext.define("TSValidationApp", {
     }
     
 });
-
             
                Rally.launchApp('TSValidationApp', {
                    name: 'Revamped Validation App'
