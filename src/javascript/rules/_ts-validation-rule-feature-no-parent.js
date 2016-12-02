@@ -1,29 +1,23 @@
-Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
+Ext.define('CA.techservices.validation.FeatureNoParentRule',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsinitiativenothemerule',
+    alias:  'widget.tsfeaturenoparentrule',
     
-   
     config: {
-        /*
-        ** projectPortfolioRoot set in base class and on constructor
-        */
-        projectPortfolioRoot: null,
         /*
         * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
         * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
         */
         portfolioItemTypes:[],
-        //model: 'PortfolioItem/Initiative',
-        label: 'Initiative needs Parent' 
+        label: 'Feature needs Parent' 
     },
     getModel:function(){
-        return this.portfolioItemTypes[1];  // 0-feature,1-initiative, etc..
+        return this.portfolioItemTypes[0];  // 0-feature,1-initiative, etc..
     },
     getDescription: function() {
         var msg = Ext.String.format(
             "{0} must be linked to a {1}",
             /[^\/]*$/.exec(this.getModel()),
-            this.portfolioItemTypes[2]
+            this.portfolioItemTypes[1]
         );
         return msg;
     },
@@ -35,7 +29,7 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
         this.label = Ext.String.format(
             "{0} without {1}",
             /[^\/]*$/.exec(this.getModel()), //regex retrieves string after 'PortfolioItem/'
-            /[^\/]*$/.exec(this.portfolioItemTypes[2])
+            /[^\/]*$/.exec(this.portfolioItemTypes[1])
             );
         return this.label;
     },
@@ -54,10 +48,6 @@ Ext.define('CA.techservices.validation.InitiativeNoThemeRule',{
     },
     
     getFilters: function() {        
-
-        // return Rally.data.wsapi.Filter.and([
-        //     {property:'Parent',operator:'=',value:null}
-        // ]);
         return [];
     }
 });
