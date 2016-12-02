@@ -50,7 +50,6 @@ Ext.define("TSValidationApp", {
     },
     rulesByType: {
         PortfolioItemTimeboxNo: [ // Initiatives and higher          
-            {xtype:'tsthemenoproductgoalrule'},
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
@@ -58,11 +57,12 @@ Ext.define("TSValidationApp", {
         // PortfolioItemTimeboxYes: [ // Features into Releases
         // ],
         HierarchicalRequirement: [
-            {xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
+            //{xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
             {xtype:'tsstorynofeatureexcludeunfinishedrule' },
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
-            {xtype:'tsstorynoreleaseexcludeunfinishedrule' },
+            {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
+            {xtype:'tsstoryacceptednoiterationrule' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'}
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
@@ -72,7 +72,7 @@ Ext.define("TSValidationApp", {
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
-            {xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
+            //{xtype:'tstaskrequiredfieldrule',  requiredFields: ['Owner']},
             {xtype:'tstasktodonoestimaterule'}
           //  {xtype:'tstaskactivenotodorule'}
         ]
