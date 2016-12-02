@@ -64,14 +64,16 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstorynonullplanestimaterule' },
             {xtype:'tsstoryacceptednoiterationrule' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
-            {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'}
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
             
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
             {xtype:'tsdefectclosednoresolutionrule'},
             {xtype:'tsdefectacceptednotclosedrule'},
-            {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'}
+            {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'}
 
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
