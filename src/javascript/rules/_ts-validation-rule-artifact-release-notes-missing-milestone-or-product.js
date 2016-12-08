@@ -15,7 +15,7 @@ Ext.define('CA.techservices.validation.ArtifactReleaseNoteButNoProductOrMileston
     },
     
     getFetchFields: function() {
-        return ['Milestones','c_ReleaseNotesComplete','c_ReleaseNotesNeeded','c_Product'];
+        return ['Milestones','c_ReleaseNoteCompleteDocUseOnly','c_ReleaseNoteNeeded','c_Product'];
     },
     
     isValidField: function(model, field_name) {
@@ -24,13 +24,11 @@ Ext.define('CA.techservices.validation.ArtifactReleaseNoteButNoProductOrMileston
     },
     
     applyRuleToRecord: function(record) {
-        if ( !record.get('c_ReleaseNotesNeeded') || ( record.get('c_ReleaseNotesComplete')) ) {
+        if ( !record.get('c_ReleaseNoteNeeded') || record.get('c_ReleaseNoteNeeded') == "No" || ( record.get('c_ReleaseNoteCompleteDocUseOnly')) ) {
             return null;
         }
-        
-        console.log('-->', record.get('Milestones'), record.get('Product'));
-        
-        if ( ( Ext.isEmpty(record.get('Milestones')) || record.get('Milestones').Count == 0 ) && Ext.isEmpty(record.get('Product')) ) {
+                
+        if ( ( Ext.isEmpty(record.get('Milestones')) || record.get('Milestones').Count == 0 ) && Ext.isEmpty(record.get('c_Product')) ) {
             return "Should have either milestone or product if Release Notes Complete = No and Release Notes Needed = Yes.";
         }
         
@@ -39,9 +37,8 @@ Ext.define('CA.techservices.validation.ArtifactReleaseNoteButNoProductOrMileston
     
     getFilters: function() {        
         return Rally.data.wsapi.Filter.and([
-        {property:'c_ReleaseNotesNeeded',value:true},
-        {property:'c_ReleaseNotesComplete',value:false}
-        
+            {property:'c_ReleaseNoteNeeded',value:"Yes"},
+            {property:'c_ReleaseNoteCompleteDocUseOnly',value:false}
         ]);
     },
     
