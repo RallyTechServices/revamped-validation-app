@@ -74,7 +74,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsdefectclosednoresolutionrule'},
             {xtype:'tsdefectacceptednotclosedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
-            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'}
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'},
+            {xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30}
 
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
