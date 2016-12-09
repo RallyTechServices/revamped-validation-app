@@ -3,13 +3,13 @@
 <head>
     <title>Revamped Validation App</title>
     <!--  (c) 2016 CA Technologies.  All Rights Reserved. -->
-    <!--  Build Date: Thu Dec 08 2016 17:38:26 GMT-0800 (PST) -->
+    <!--  Build Date: Thu Dec 08 2016 17:58:15 GMT-0800 (PST) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Dec 08 2016 17:38:26 GMT-0800 (PST)";
+        var APP_BUILD_DATE = "Thu Dec 08 2016 17:58:15 GMT-0800 (PST)";
         var STORY    = "US569";
         var BUILDER  = "jmartin";
-        var CHECKSUM = 181376130674;
+        var CHECKSUM = 182334184709;
     </script>
     
     <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
@@ -878,25 +878,25 @@ Ext.define('CA.techservices.validation.InitiativeProjectNotGlobalDevelopmentRule
        return [];
     }
 });
-Ext.define('CA.techservices.validation.StoryAcceptedButNoIteration',{
+Ext.define('CA.techservices.validation.StoryActiveButNoIteration',{
     extend: 'CA.techservices.validation.BaseRule',
-    alias:  'widget.tsstoryacceptednoiterationrule',
+    alias:  'widget.tsstoryactivenoiterationrule',
     
    
     config: {
         model: 'HierarchicalRequirement',
-        label: 'No Iteration (Acc Story)'
+        label: 'No Iteration (Active Story)'
     },
     
     getDescription: function() {
         return Ext.String.format("<strong>{0}</strong>: {1}",
             this.label,
-            "Accepted stories without an Iteration."
+            "Active stories without an Iteration."
         );
     },
     
     getFetchFields: function() {
-        return ['Iteration','ScheduleState'];
+        return ['Iteration','ScheduleState','AcceptedDate','DirectChildrenCount'];
     },
     
     isValidField: function(model, field_name) {
@@ -905,14 +905,20 @@ Ext.define('CA.techservices.validation.StoryAcceptedButNoIteration',{
     },
     
     applyRuleToRecord: function(record) {
-        //var missingFields = [];
-
-        //console.log("applyRuleToRecord",record);
-
-        if ( Ext.isEmpty(record.get('Iteration')) &&
-             record.get('ScheduleState') == 'Accepted') {
-            var msg = "Accepted stories must be assigned to the Iteration where they were fixed.";
-            return msg;   
+        if ( record.get('DirectChildrenCount') > 0 ) {
+            return null;
+        }
+        
+        if ( !Ext.isEmpty(record.get('Iteration')) ) {
+            return null;
+        }
+        
+        if ( record.get('AcceptedDate') ) {
+            return "Accepted stories must be assigned to an Iteration.";
+        }
+        
+        if ( Ext.Array.contains(['In-Progress','Completed'], record.get('ScheduleState')) ) {
+            return "Active stories must be assigned to an Iteration.";
         }
         
         return null; // no rule violation
@@ -921,7 +927,8 @@ Ext.define('CA.techservices.validation.StoryAcceptedButNoIteration',{
     getFilters: function() {        
         return Rally.data.wsapi.Filter.and([
             {property:'Iteration',operator: '=', value: null },
-            {property:'ScheduleState',operator:'=',value:'Accepted'}           
+            {property:'ScheduleState',operator:'>',value:'Defined'},
+            {property:'DirectChildrenCount',value: 0}
         ]);
     }
 });
@@ -2085,7 +2092,7 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryacceptednoiterationrule' },
+            {xtype:'tsstoryactivenoiterationrule' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
             {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
