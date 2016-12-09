@@ -64,7 +64,7 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryactivenoiterationrule' },
+            {xtype:'tsartifactactivenoiterationrule', model: 'HierarchicalRequirement' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
             {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
@@ -76,7 +76,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsdefectacceptednotclosedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
             {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'},
-            {xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30}
+            {xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30},
+            {xtype:'tsartifactactivenoiterationrule', model: 'Defect' }
 
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
