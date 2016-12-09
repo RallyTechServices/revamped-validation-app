@@ -52,6 +52,7 @@ Ext.define("TSValidationApp", {
         PortfolioItemTimeboxNo: [          
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsfeaturenoparentrule'},
+            {xtype:'tsfeaturecurrentreleasenocommitmentrule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],

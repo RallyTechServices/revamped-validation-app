@@ -52,7 +52,6 @@ Ext.define('CA.techservices.validator.Validator',{
                 var new_rule = Ext.clone(rule);
                 delete new_rule.xtype;
                 // delete rule.xtype; // # confirm
-                console.log('Initializing ', name,rule);
                 rules.push(Ext.createByAlias('widget.' + name, new_rule));
             }
         });
@@ -77,7 +76,7 @@ Ext.define('CA.techservices.validator.Validator',{
     getFiltersByModel: function() {
         var me = this,
             filters_by_model = {};
-            
+             
         Ext.Array.each(this.rules, function(rule){
             var model = rule.getModel();
             var filters = rule.getFilters();
@@ -98,9 +97,6 @@ Ext.define('CA.techservices.validator.Validator',{
             filters_by_model[model] = Rally.data.wsapi.Filter.or(filters);
             
             if ( me.baseFilters && me.baseFilters != {} && me.baseFilters[model] != {} ) {
-                
-                console.log("Flattening the Filter array ",me.baseFilters);
-
                 filters_by_model[model] = filters_by_model[model].and(me.baseFilters[model]);
             }
         });
@@ -279,7 +275,6 @@ Ext.define('CA.techservices.validator.Validator',{
     },
     
     getPrecheckResults: function() {    
-        console.log("GetPreCheckResults",this,this.rules.length,this.rules);    
         var promises = Ext.Array.map(this.rules, function(rule){
             return function() {
                 return rule.precheckRule();
