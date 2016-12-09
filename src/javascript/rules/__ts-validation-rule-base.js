@@ -1,24 +1,27 @@
 Ext.define('CA.techservices.validation.BaseRule',{
     extend: 'Ext.Base',
-    /*
-    * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
-    * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
-    */
-    portfolioItemTypes:[],
-    /**
-     * 
-     * @cfg
-     * {String} model The name of a record type that this rule applies to 
-     */
-    model: null,
-    /**
-     * 
-     * @cfg {String} a human-readable label for the chart that will be made from the rule
-     */
-    label: 'No label supplied for this rule',
     
+    config: {
+        /*
+        * [{Rally.wsapi.data.Model}] portfolioItemTypes the list of PIs available
+        * we're going to use the first level ones (different workspaces name their portfolio item levels differently)
+        */
+        portfolioItemTypes:[],
+        /**
+         * 
+         * @cfg
+         * {String} model The name of a record type that this rule applies to 
+         */
+        model: null,
+        /**
+         * 
+         * @cfg {String} a human-readable label for the chart that will be made from the rule
+         */
+        label: 'No label supplied for this rule'
+    },
+
     constructor: function(config) {
-        Ext.apply(this,config);
+        this.mergeConfig(config);
     },
     
     shouldExecuteRule: true,
@@ -70,6 +73,6 @@ Ext.define('CA.techservices.validation.BaseRule',{
     },
     
     getUserFriendlyRuleLabel: function() {        
-        return this.label;
+        return this.label || this.getLabel();
     }
 });

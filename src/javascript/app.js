@@ -52,6 +52,7 @@ Ext.define("TSValidationApp", {
         PortfolioItemTimeboxNo: [          
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsfeaturenoparentrule'},
+            {xtype:'tsfeaturecurrentreleasenocommitmentrule'},
             {xtype:'tsthemeprojectnotglobaldevelopmentrule'},
             {xtype:'tsinitiativeprojectnotglobaldevelopmentrule'}
         ],
@@ -63,7 +64,7 @@ Ext.define("TSValidationApp", {
             {xtype:'tsstoryunfinishedwithfeaturerule' },    
             {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
             {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsstoryacceptednoiterationrule' },
+            {xtype:'tsartifactactivenoiterationrule', model: 'HierarchicalRequirement' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
             {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
@@ -74,7 +75,9 @@ Ext.define("TSValidationApp", {
             {xtype:'tsdefectclosednoresolutionrule'},
             {xtype:'tsdefectacceptednotclosedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
-            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'}
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'},
+            {xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30},
+            {xtype:'tsartifactactivenoiterationrule', model: 'Defect' }
 
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
