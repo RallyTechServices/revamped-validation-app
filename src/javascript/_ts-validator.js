@@ -42,16 +42,13 @@ Ext.define('CA.techservices.validator.Validator',{
         
         var rules = [];
         
-       // Ext.Array.each(this.rules, function(rule){
-            Ext.Array.each(config.rules, function(rule){
+        Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
-
-            //console.log('validator-constructor-before delete: ', name,rule);
 
             if ( !Ext.isEmpty(name) ) {
                 var new_rule = Ext.clone(rule);
                 delete new_rule.xtype;
-                // delete rule.xtype; // # confirm
+                console.log("initializing " + name);
                 rules.push(Ext.createByAlias('widget.' + name, new_rule));
             }
         });

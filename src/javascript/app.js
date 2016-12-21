@@ -67,8 +67,8 @@ Ext.define("TSValidationApp", {
             {xtype:'tsartifactactivenoiterationrule', model: 'HierarchicalRequirement' },
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
-            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
-            
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'},
+            {xtype:'tsstorywithdoctagnodocnamerule'}
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
