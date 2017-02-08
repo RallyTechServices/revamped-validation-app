@@ -39,7 +39,15 @@ Ext.define("TSValidationApp", {
             fieldLabel: '',
             margin: '0 0 25 200',
             boxLabel: 'Show only schedulable artifacts: User Stories, Defects and Tasks.'
-         }
+         },
+         {
+             name: 'showNewGlobal',
+             xtype: 'rallycheckboxfield',
+             boxLabelAlign: 'after',
+             fieldLabel: '',
+             margin: '0 0 25 200',
+             boxLabel: 'Show only the new set of global (non-team-specific) checks.'
+          }
          ];
     },
     config: {
@@ -49,7 +57,11 @@ Ext.define("TSValidationApp", {
         }
     },
     rulesByType: {
-        PortfolioItemTimeboxNo: [          
+        NewGlobal: [
+            {xtype:'tsartifactactivenotinleafproject', model:'HierarchicalRequirement'},
+            {xtype:'tsartifactactivenotinleafproject', model:'Defect'}
+        ],
+        PortfolioItemTimeboxNo: [         
             {xtype:'tsinitiativenothemerule'},
             {xtype:'tsfeaturenoparentrule'},
             {xtype:'tsfeaturecurrentreleasenocommitmentrule'},
@@ -60,25 +72,32 @@ Ext.define("TSValidationApp", {
         // ],
         HierarchicalRequirement: [
             //{xtype:'tsstoryrequiredfieldrule', requiredFields: ['Owner','Description']},
-            {xtype:'tsstorynofeatureexcludeunfinishedrule' },
-            {xtype:'tsstoryunfinishedwithfeaturerule' },    
-            {xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
-            {xtype:'tsstorynonullplanestimaterule' },
-            {xtype:'tsartifactactivenoiterationrule', model: 'HierarchicalRequirement' },
+ 
+            // these are checked via list
+            //{xtype:'tsstorynofeatureexcludeunfinishedrule' },
+            //{xtype:'tsstoryunfinishedwithfeaturerule' },   
+            //{xtype:'tsstoryschedulednoreleaseexcludeinactiverule' },
+            //{xtype:'tsstorynonullplanestimaterule' },
+            //{xtype:'tsartifactactivenoiterationrule', model: 'HierarchicalRequirement' },
+ 
             {xtype:'tsstoryreleasenoteqfeaturereleaseexcludeunfinishedrule'},
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'HierarchicalRequirement'},
-            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'},
-            {xtype:'tsstorywithdoctagnodocnamerule'}
+            {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'HierarchicalRequirement'}
+ 
             //{xtype:'tsstoryunfinishedacceptedrule'}
         ],
         Defect: [
-            {xtype:'tsdefectclosednoresolutionrule'},
-            {xtype:'tsdefectacceptednotclosedrule'},
+            // these are checked via list
+            //{xtype:'tsdefectclosednoresolutionrule'},
+            //{xtype:'tsdefectacceptednotclosedrule'},
+ 
             {xtype:'tsartifactiterationmismatchesreleaserule',model:'Defect'},
             {xtype:'tsartifactreleasenotebutnoproductmilestonerule',model:'Defect'},
-            {xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30},
-            {xtype:'tsartifactactivenoiterationrule', model: 'Defect' }
-
+ 
+            // these are checked via list
+            //{xtype:'tsdefecttimeinstaterule',state:'Untriaged',dayLimit:30},
+            //{xtype:'tsartifactactivenoiterationrule', model: 'Defect' }
+ 
             //{xtype:'tsdefectreleasenoteqdefectsuitereleaserule'}
         ],
         Task: [
@@ -86,18 +105,20 @@ Ext.define("TSValidationApp", {
             {xtype:'tstasktodonoestimaterule'}
           //  {xtype:'tstaskactivenotodorule'}
         ]
-    },                    
+    },                   
     launch: function() {
-        this.logger.log("launch:", this);
+        //this.logger.log("launch:", this);
         //setup the page
         this._doLayout();
 
-        // get any data model customizations ... then get the data and render the chart
-        this._fetchPortfolioItemTypes().then({
-            success: this._initializeApp, 
-            failure: this._showErrorMsg,
-            scope: this
-        });        
+        Deft.promise.Chain.parallel([
+            this._fetchNonLeafProjectRefs,
+            // get any data model customizations ... then get the data and render the chart
+            this._fetchPortfolioItemTypes], this).then({
+              success: this._initializeApp,
+              failure: this._showErrorMsg,
+              scope: this
+            });           
     },
 
     showDrillDown: function(records, title) {
@@ -155,10 +176,13 @@ Ext.define("TSValidationApp", {
             }]
         }).show();
     },
-    _initializeApp: function(portfolioItemTypes){
+    _initializeApp: function(params){
+        var nonLeafProjectRefs = params[0];
+        var portfolioItemTypes = params[1];
+ 
         var me = this;
-        
-        me.logger.log('InitializeApp',portfolioItemTypes);
+       
+        //me.logger.log('InitializeApp',portfolioItemTypes);
 
         // add the array of portfolioItem Type names to each portfolio rule as we instantiate it
         // also grab appSetting for a target folder to hold high-level portfolio items
@@ -176,11 +200,17 @@ Ext.define("TSValidationApp", {
             rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
         });
         
+        Ext.Array.each(me.rulesByType.NewGlobal, function(rule){
+            // get the collection of workspace specific portfolio item names per level
+            rule.portfolioItemTypes = portfolioItemTypes;
+            rule.nonLeafProjectRefs = nonLeafProjectRefs;
+            // for rules that need to have a specific project folder for portfolio items
+            rule.projectPortfolioRoot = me.getSetting('rootPortfolioProject');
+        });
+        
         // add the array to the app as well.
         me.portfolioItemTypes = portfolioItemTypes;
 
-        console.log("_initializeApp after assign:",me.rulesByType);
-        
         me._loadData();
     },
     _showErrorMsg: function(msg){
@@ -208,6 +238,35 @@ Ext.define("TSValidationApp", {
             }
         })
         
+        return deferred;
+    },
+    _fetchNonLeafProjectRefs: function(){
+        var deferred = Ext.create('Deft.Deferred');
+        Ext.create('Rally.data.wsapi.Store',{
+            model: 'Project',
+            filters: [
+                {property:'Parent',operator:'!=',value:null},
+                {property:'State',operator:'=',value:'Open'}
+            ],
+            fetch:['Parent']
+        }).load({
+            callback: function(records,operation){
+                if (operation.wasSuccessful()){
+                    var parentProjectRefs = {};
+                    Ext.Array.each(records,function(rec){
+                        var parent = rec.get("Parent");
+                        if (typeof parent === "object") {
+                            parentProjectRefs[parent._ref] = 1;
+                        }
+                    });
+                    deferred.resolve(parentProjectRefs);
+                } else {
+                    var message = 'failed to load Projects ' + (operation.error && operation.error.errors.join(','));
+                    deferred.reject(message);
+                }
+            }
+        })
+       
         return deferred;
     },
 
@@ -457,7 +516,9 @@ Ext.define("TSValidationApp", {
             }
             if ( me.down('#taskRuleCheckBox').value ) {
                 rules = Ext.Array.push(rules, me.rulesByType['Task']);
-            }       
+            }
+        } else if ( me.getSetting('showNewGlobal')) {
+            rules = Ext.Array.push(rules, me.rulesByType['NewGlobal']);
         } else { // only show high level Portfolio Item rules
             if ( me.down('#portfolioRuleCheckBox').value) {
                 rules = Ext.Array.push(rules, me.rulesByType['PortfolioItemTimeboxNo']);
@@ -499,6 +560,24 @@ Ext.define("TSValidationApp", {
                     }
                 }
             });
+        } else if (this.getSetting('showNewGlobal')){
+            validator = Ext.create('CA.techservices.validator.Validator',{
+                rules: rules,
+                fetchFields: ['FormattedID','ObjectID'],
+                // get any settings from the timebox selectors
+                // baseFilters:{
+                //     PortfolioItemTimeboxNo:{},
+                //     PortfolioItemTimeboxYes:{},
+                //      HierarchicalRequirement: {},
+                //     Defect: {},
+                //     Task: {}
+                // },
+                pointEvents: {
+                    click: function() {
+                    me.showDrillDown(this._records,this._name);
+                    }
+                }
+            });
         } else {
             validator = Ext.create('CA.techservices.validator.Validator',{
                 rules: rules,
@@ -533,7 +612,8 @@ Ext.define("TSValidationApp", {
 
         this.logger.log('_makeChart Project Count Test: ',this.MAX_LIMITS.CATEGORIES,data.categories.length);
 
-        if (data.categories.length > this.MAX_LIMITS.CATEGORIES){
+        if (!this.getSetting('showNewGlobal')  &&
+            data.categories.length > this.MAX_LIMITS.CATEGORIES){
             // if there are too many projects in scope (i.e. categories) the chart is unreadable.
             var msg = Ext.String.format ("You've selected a project too high in the project hierarchy. With {0} ",data.categories.length);
             msg += "[child] projects in scope, the chart will be unusable. Please select a project ";

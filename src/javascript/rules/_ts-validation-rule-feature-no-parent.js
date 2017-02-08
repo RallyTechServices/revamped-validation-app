@@ -48,6 +48,10 @@ Ext.define('CA.techservices.validation.FeatureNoParentRule',{
     },
     
     getFilters: function() {        
-        return [];
+        return Ext.create('Rally.data.wsapi.Filter',{
+            property:'Parent',
+            operator: '=',
+            value: null
+        });
     }
 });

@@ -29,7 +29,7 @@ Ext.define('CA.techservices.validation.ArtifactIterationMismatchesReleaseRule',{
         }
         
         if ( Ext.isEmpty(record.get('Release')) ) {
-            return "Has an iteration but does not have a release";
+            return null; // this will be checked via custom list
         }
         
         var iteration = record.get('Iteration');
@@ -46,8 +46,14 @@ Ext.define('CA.techservices.validation.ArtifactIterationMismatchesReleaseRule',{
     },
     
     getFilters: function() {        
-        return Rally.data.wsapi.Filter.and([
-            {property:'Iteration.ObjectID',operator:'>',value:1}
+        // without this filter, the number of items that must be downloaded to evaluate
+        // this check would grow without bound; if a user wants to do a one-time review of
+        // past items where Release and Iteration are mismatched, they should do a manual
+        // review with a custom list
+        var today = Rally.util.DateTime.toIsoString(new Date());
+        return Rally.data.wsapi.Filter.or([
+            {property:'Release.ReleaseDate',operator:'>=',value: today},
+            {property:'Iteration.EndDate',operator:'>=',value: today}
         ]);
     },
     
