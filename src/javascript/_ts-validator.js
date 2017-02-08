@@ -42,16 +42,13 @@ Ext.define('CA.techservices.validator.Validator',{
         
         var rules = [];
         
-       // Ext.Array.each(this.rules, function(rule){
-            Ext.Array.each(config.rules, function(rule){
+        Ext.Array.each(config.rules, function(rule){
             var name = rule.xtype;
-
-            //console.log('validator-constructor-before delete: ', name,rule);
 
             if ( !Ext.isEmpty(name) ) {
                 var new_rule = Ext.clone(rule);
                 delete new_rule.xtype;
-                // delete rule.xtype; // # confirm
+                console.log("initializing " + name);
                 rules.push(Ext.createByAlias('widget.' + name, new_rule));
             }
         });
@@ -178,8 +175,9 @@ Ext.define('CA.techservices.validator.Validator',{
         var categories = this.getCategories();
         var series = this.getSeries(categories);
         
-        return { series: series, categories: categories };
-        
+        var chartData = { series: series, categories: categories };
+        this.trimEmptyCategoriesFromChartData(chartData);
+        return chartData;        
     },
     
     getCategories: function() {
@@ -244,6 +242,42 @@ Ext.define('CA.techservices.validator.Validator',{
         return series;
     },
     
+    
+    trimEmptyCategoriesFromChartData: function(chartData) {
+        var categories = chartData.categories;
+        var allSeries = chartData.series;
+ 
+        var populatedCategories = [];
+        for (var i=0; i<categories.length; i++) {
+            populatedCategories[i] = false;
+        }
+ 
+        var result = Ext.each (allSeries, function(series) {
+            var data = series.data;
+            if (data.length !== populatedCategories.length) {
+                console.log("data length doesn't match categories length");
+                return false;
+            }
+            for (var i=0; i<data.length; i++) {
+                if (data[i].y > 0) {
+                    populatedCategories[i] = true;
+                }
+            }
+ 
+        });
+        if (result === true) {
+            for (var i=populatedCategories.length-1; i>=0; i--) {
+                if (!populatedCategories[i]) {
+                    Ext.Array.erase(categories, i, 1);
+                    var result = Ext.each (allSeries, function(series) {
+                        Ext.Array.erase(series.data, i, 1);
+                    });
+                }
+            }
+        }
+ 
+    },
+     
     getFailedRecordsForRule: function(records, rule) {
         var failed_records = [];
         Ext.Array.each(records, function(record) {

@@ -60,7 +60,6 @@ return null;
     },
     
     getFilters: function() {        
-        var today = Rally.util.DateTime.toIsoString(new Date());
         return Ext.create('Rally.data.wsapi.Filter',{
             property:'DefectSuites.ObjectID',
             operator: '!=',

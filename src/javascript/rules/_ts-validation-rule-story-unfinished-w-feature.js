@@ -40,7 +40,7 @@ Ext.define('CA.techservices.validation.StoryUnfinishedWithFeatureRule',{
 
         return Rally.data.wsapi.Filter.and([
             {property:'Feature',operator:'!=',value:null},
-            {property:'Name',operator: '!contains', value: "[Unfinished]" }
+            {property:'Name',operator: 'contains', value: "[Unfinished]" }
         ]);
     }
 });

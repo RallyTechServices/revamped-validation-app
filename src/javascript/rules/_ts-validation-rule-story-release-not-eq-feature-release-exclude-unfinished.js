@@ -53,8 +53,13 @@ Ext.define('CA.techservices.validation.StoryReleaseNotEqFeatureReleaseExcludeUnf
         var today = Rally.util.DateTime.toIsoString(new Date());
 
         return Rally.data.wsapi.Filter.and([
-            {property:'Feature',operator:'!=',value:null},
-            {property:'Name',operator: '!contains', value: "[Unfinished]" }
-        ]);
+        {property:'Feature',operator:'!=',value:null},
+        {property:'Name',operator: '!contains', value: "[Unfinished]" },
+        // without this filter, the number of stories that must be downloaded to
+        // evaluate this check would grow without bound; if a user wants to do a
+        // one-time review of past stories where Release doesn't match the Feature's
+        // release, they should do a manual review with a custom list
+        {property:'Release.ReleaseDate',operator:'>=',value: today}
+    ]);
     }
 });
